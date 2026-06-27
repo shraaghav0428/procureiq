@@ -305,7 +305,7 @@ export function ComparisonTable() {
                       const rank = itemRankMap.get(vIdx) || 0;
                       const isL1 = rank === 1;
                       const totalWithGst =
-                        item.totalPrice * (1 + item.gstPercent / 100);
+                        item.annualQty * item.unitPrice * (1 + item.gstPercent / 100);
                       const overallR = vendorOverallRank.get(vIdx) || 0;
 
                       return (
@@ -376,7 +376,7 @@ export function ComparisonTable() {
                   const totalGst =
                     vendor.lineItems.reduce(
                       (sum, item) =>
-                        sum + item.totalPrice * (1 + item.gstPercent / 100),
+                        sum + item.annualQty * item.unitPrice * (1 + item.gstPercent / 100),
                       0
                     );
 

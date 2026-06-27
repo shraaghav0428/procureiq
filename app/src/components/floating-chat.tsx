@@ -132,26 +132,25 @@ export function FloatingChat() {
         </button>
       </div>
 
-      {chatMessages.length === 0 && (
-        <div className="shrink-0 px-3 py-2.5 border-b border-border bg-muted/30">
-          <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">
-            Quick Questions
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {questions.slice(0, 5).map((q) => (
-              <button
-                key={q.id}
-                onClick={() => {
-                  sendMessage(q.text);
-                }}
-                className="text-[11px] text-muted-foreground bg-background border border-border rounded-full px-2.5 py-1 hover:bg-[#0070BB] hover:text-white hover:border-[#0070BB] transition-all"
-              >
-                {q.text}
-              </button>
-            ))}
-          </div>
+      <div className="shrink-0 px-3 py-2.5 border-b border-border bg-muted/30">
+        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-semibold mb-1.5">
+          Quick Questions
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          {questions.slice(0, 5).map((q) => (
+            <button
+              key={q.id}
+              onClick={() => {
+                sendMessage(q.text);
+              }}
+              disabled={isLoadingChat}
+              className="text-[11px] text-muted-foreground bg-background border border-border rounded-full px-2.5 py-1 hover:bg-[#0070BB] hover:text-white hover:border-[#0070BB] transition-all disabled:opacity-50"
+            >
+              {q.text}
+            </button>
+          ))}
         </div>
-      )}
+      </div>
 
       <div className="flex-1 overflow-y-auto p-3 space-y-3">
         {chatMessages.length === 0 && (
