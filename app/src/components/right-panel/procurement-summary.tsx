@@ -25,11 +25,12 @@ export function ProcurementSummaryCard() {
   } = useAppStore();
 
   const retryCountRef = useRef(0);
-  const maxRetries = 3;
+  const maxRetries = 5;
 
   const fetchSummary = useCallback(async () => {
     setIsLoadingSummary(true);
     setSummary(null);
+    let willRetry = false;
     try {
       const response = await fetch("/api/summary", {
         method: "POST",
@@ -45,20 +46,18 @@ export function ProcurementSummaryCard() {
         retryCountRef.current = 0;
       } else if (response.status === 429 && retryCountRef.current < maxRetries) {
         retryCountRef.current += 1;
-        const delay = retryCountRef.current * 5000;
-        setTimeout(fetchSummary, delay);
-        return;
+        willRetry = true;
+        setTimeout(fetchSummary, retryCountRef.current * 5000);
       }
     } catch (error) {
       console.error("Summary error:", error);
       if (retryCountRef.current < maxRetries) {
         retryCountRef.current += 1;
-        const delay = retryCountRef.current * 5000;
-        setTimeout(fetchSummary, delay);
-        return;
+        willRetry = true;
+        setTimeout(fetchSummary, retryCountRef.current * 5000);
       }
     } finally {
-      setIsLoadingSummary(false);
+      if (!willRetry) setIsLoadingSummary(false);
     }
   }, [selectedEvent.id, persona]);
 

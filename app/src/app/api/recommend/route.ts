@@ -33,7 +33,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(recommendation);
   } catch (error: unknown) {
     console.error("Recommendation error:", error);
-    const status = error instanceof Error && error.message?.includes("429") ? 429 : 500;
+    const msg = error instanceof Error ? error.message : "";
+    const status = msg.includes("429") || msg.includes("503") ? 429 : 500;
     return NextResponse.json(
       { error: "Failed to generate recommendation" },
       { status }

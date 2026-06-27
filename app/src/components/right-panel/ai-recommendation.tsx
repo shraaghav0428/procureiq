@@ -23,11 +23,12 @@ export function AIRecommendation() {
   } = useAppStore();
 
   const retryCountRef = useRef(0);
-  const maxRetries = 3;
+  const maxRetries = 5;
 
   const fetchRecommendation = useCallback(async () => {
     setIsLoadingRecommendation(true);
     setRecommendation(null);
+    let willRetry = false;
     try {
       const response = await fetch("/api/recommend", {
         method: "POST",
@@ -43,20 +44,18 @@ export function AIRecommendation() {
         retryCountRef.current = 0;
       } else if (response.status === 429 && retryCountRef.current < maxRetries) {
         retryCountRef.current += 1;
-        const delay = retryCountRef.current * 5000;
-        setTimeout(fetchRecommendation, delay);
-        return;
+        willRetry = true;
+        setTimeout(fetchRecommendation, retryCountRef.current * 5000);
       }
     } catch (error) {
       console.error("Recommendation error:", error);
       if (retryCountRef.current < maxRetries) {
         retryCountRef.current += 1;
-        const delay = retryCountRef.current * 5000;
-        setTimeout(fetchRecommendation, delay);
-        return;
+        willRetry = true;
+        setTimeout(fetchRecommendation, retryCountRef.current * 5000);
       }
     } finally {
-      setIsLoadingRecommendation(false);
+      if (!willRetry) setIsLoadingRecommendation(false);
     }
   }, [selectedEvent.id, persona]);
 
