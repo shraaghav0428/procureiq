@@ -19,7 +19,7 @@ export async function generateResponse(
 ): Promise<string> {
   const client = getClient();
   const model = client.getGenerativeModel({
-    model: "gemini-2.5-flash-lite",
+    model: "gemini-2.0-flash",
     systemInstruction: systemPrompt,
   });
 
@@ -33,7 +33,7 @@ export async function* generateStreamingResponse(
 ): AsyncGenerator<string> {
   const client = getClient();
   const model = client.getGenerativeModel({
-    model: "gemini-2.5-flash-lite",
+    model: "gemini-2.0-flash",
     systemInstruction: systemPrompt,
   });
 
