@@ -19,7 +19,7 @@ function formatInr(amount: number): string {
 
 function PriceChange({ currentPrice, previousPrice, showPrevious }: { currentPrice: number; previousPrice: number; showPrevious: boolean }) {
   const pctChange = ((currentPrice - previousPrice) / previousPrice) * 100;
-  const isUp = pctChange > 0;
+  const isCostUp = pctChange > 0;
   const absChange = Math.abs(pctChange);
 
   if (absChange < 0.5) return null;
@@ -29,22 +29,22 @@ function PriceChange({ currentPrice, previousPrice, showPrevious }: { currentPri
       <span
         className={cn(
           "inline-flex items-center gap-0.5 text-[9px] font-semibold",
-          isUp ? "text-red-600" : "text-green-600"
+          isCostUp ? "text-red-600" : "text-green-600"
         )}
       >
-        {isUp ? (
-          <TrendingUp className="w-2.5 h-2.5" />
-        ) : (
+        {isCostUp ? (
           <TrendingDown className="w-2.5 h-2.5" />
+        ) : (
+          <TrendingUp className="w-2.5 h-2.5" />
         )}
         {absChange.toFixed(1)}%
       </span>
       {showPrevious && (
         <span
-          className="inline-flex items-center ml-0.5 text-muted-foreground/60 cursor-help"
+          className="ml-0.5 text-[8px] text-muted-foreground/70 cursor-help border-b border-dotted border-muted-foreground/40"
           title={`Previously bought at ${formatInr(previousPrice)}`}
         >
-          <Info className="w-2.5 h-2.5" />
+          prev
         </span>
       )}
     </span>
