@@ -390,6 +390,18 @@ export function ComparisonTable() {
                             <div className="text-[10px] text-muted-foreground/70">
                               {item.incoterms}
                             </div>
+                            {item.certifications.length > 0 && (
+                              <div className="flex flex-wrap gap-0.5 pt-0.5">
+                                {item.certifications.map((cert) => (
+                                  <span
+                                    key={cert}
+                                    className="text-[8px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium"
+                                  >
+                                    {cert}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         </td>
                       );

@@ -137,7 +137,7 @@ export function FloatingChat() {
           Quick Questions
         </p>
         <div className="flex flex-wrap gap-1.5">
-          {questions.slice(0, 5).map((q) => (
+          {questions.map((q) => (
             <button
               key={q.id}
               onClick={() => {
