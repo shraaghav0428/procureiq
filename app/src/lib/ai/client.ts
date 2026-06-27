@@ -1,55 +1,55 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Anthropic from "@anthropic-ai/sdk";
 
-let genAI: GoogleGenerativeAI | null = null;
+let client: Anthropic | null = null;
 
-function getClient(): GoogleGenerativeAI {
-  if (!genAI) {
-    const apiKey = process.env.GEMINI_API_KEY;
+function getClient(): Anthropic {
+  if (!client) {
+    const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
-      throw new Error("GEMINI_API_KEY environment variable is not set");
+      throw new Error("ANTHROPIC_API_KEY environment variable is not set");
     }
-    genAI = new GoogleGenerativeAI(apiKey);
+    client = new Anthropic({ apiKey });
   }
-  return genAI;
+  return client;
 }
 
-function cleanResponse(text: string): string {
-  return text
-    .replace(/```json\s*/gi, "")
-    .replace(/```\s*/g, "")
-    .trim();
-}
+const MODEL = "claude-haiku-4-5-20251001";
 
 export async function generateResponse(
   systemPrompt: string,
   userPrompt: string
 ): Promise<string> {
-  const client = getClient();
-  const model = client.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    systemInstruction: systemPrompt,
+  const anthropic = getClient();
+  const message = await anthropic.messages.create({
+    model: MODEL,
+    max_tokens: 1024,
+    system: systemPrompt,
+    messages: [{ role: "user", content: userPrompt }],
   });
 
-  const result = await model.generateContent(userPrompt);
-  return cleanResponse(result.response.text());
+  const block = message.content[0];
+  return block.type === "text" ? block.text : "";
 }
 
 export async function* generateStreamingResponse(
   systemPrompt: string,
   userPrompt: string
 ): AsyncGenerator<string> {
-  const client = getClient();
-  const model = client.getGenerativeModel({
-    model: "gemini-2.5-flash",
-    systemInstruction: systemPrompt,
+  const anthropic = getClient();
+
+  const stream = anthropic.messages.stream({
+    model: MODEL,
+    max_tokens: 1024,
+    system: systemPrompt,
+    messages: [{ role: "user", content: userPrompt }],
   });
 
-  const result = await model.generateContentStream(userPrompt);
-
-  for await (const chunk of result.stream) {
-    const text = chunk.text();
-    if (text) {
-      yield cleanResponse(text);
+  for await (const event of stream) {
+    if (
+      event.type === "content_block_delta" &&
+      event.delta.type === "text_delta"
+    ) {
+      yield event.delta.text;
     }
   }
 }
