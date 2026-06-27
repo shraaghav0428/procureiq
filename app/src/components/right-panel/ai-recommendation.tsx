@@ -4,7 +4,6 @@ import { useEffect, useRef, useCallback } from "react";
 import { useAppStore } from "@/stores/app-store";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  Sparkles,
   CheckCircle2,
   AlertTriangle,
   ArrowRight,
@@ -65,104 +64,88 @@ export function AIRecommendation() {
   }, [selectedEvent.id, persona, fetchRecommendation]);
 
   return (
-    <div className="rounded-xl border border-primary/20 bg-gradient-to-b from-primary/5 to-transparent overflow-hidden">
-      <div className="px-4 py-3 border-b border-primary/10 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-md bg-primary flex items-center justify-center">
-            <Sparkles className="w-3.5 h-3.5 text-primary-foreground" />
+    <div>
+      {isLoadingRecommendation ? (
+        <div className="space-y-3">
+          <Skeleton className="h-5 w-3/4" />
+          <Skeleton className="h-4 w-full" />
+          <Skeleton className="h-4 w-5/6" />
+          <div className="space-y-2 mt-4">
+            <Skeleton className="h-3 w-full" />
+            <Skeleton className="h-3 w-4/5" />
+            <Skeleton className="h-3 w-full" />
           </div>
-          <h3 className="text-sm font-semibold text-foreground">
-            AI Recommendation
-          </h3>
         </div>
-        <button
-          onClick={fetchRecommendation}
-          disabled={isLoadingRecommendation}
-          className="text-muted-foreground hover:text-foreground transition-colors"
-        >
-          <RefreshCw
-            className={cn(
-              "w-3.5 h-3.5",
-              isLoadingRecommendation && "animate-spin"
-            )}
-          />
-        </button>
-      </div>
-
-      <div className="p-4">
-        {isLoadingRecommendation ? (
-          <div className="space-y-3">
-            <Skeleton className="h-5 w-3/4" />
-            <Skeleton className="h-4 w-full" />
-            <Skeleton className="h-4 w-5/6" />
-            <div className="space-y-2 mt-4">
-              <Skeleton className="h-3 w-full" />
-              <Skeleton className="h-3 w-4/5" />
-              <Skeleton className="h-3 w-full" />
-            </div>
-          </div>
-        ) : recommendation ? (
-          <div className="space-y-4">
-            <div>
-              <div className="flex items-center gap-2 mb-1.5">
-                <span className="text-base font-bold text-primary">
-                  {recommendation.vendorName}
+      ) : recommendation ? (
+        <div className="space-y-4">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-base font-bold text-[#0070BB]">
+                {recommendation.vendorName}
+              </span>
+              {recommendation.confidence >= 0.8 && (
+                <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">
+                  High Confidence
                 </span>
-                {recommendation.confidence >= 0.8 && (
-                  <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium">
-                    High Confidence
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-foreground leading-relaxed">
-                {recommendation.answer}
-              </p>
+              )}
             </div>
-
-            <div>
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
-                <CheckCircle2 className="w-3 h-3 text-green-600" />
-                Evidence
-              </h4>
-              <ul className="space-y-1.5">
-                {recommendation.evidence.map((point, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-foreground">
-                    <ArrowRight className="w-3 h-3 text-primary mt-0.5 shrink-0" />
-                    <span>{point}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="p-3 rounded-lg bg-primary/5 border border-primary/10">
-              <p className="text-xs font-medium text-foreground">
-                {recommendation.recommendation}
-              </p>
-            </div>
-
-            <div>
-              <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
-                <AlertTriangle className="w-3 h-3 text-amber-500" />
-                Trade-offs
-              </h4>
-              <ul className="space-y-1.5">
-                {recommendation.tradeoffs.map((tradeoff, i) => (
-                  <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
-                    <span className="text-amber-500 mt-0.5 shrink-0">
-                      &bull;
-                    </span>
-                    <span>{tradeoff}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            <p className="text-sm text-foreground leading-relaxed">
+              {recommendation.answer}
+            </p>
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Failed to load recommendation. Click refresh to try again.
+
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+              <CheckCircle2 className="w-3 h-3 text-green-600" />
+              Evidence
+            </h4>
+            <ul className="space-y-1.5">
+              {recommendation.evidence.map((point, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-foreground">
+                  <ArrowRight className="w-3 h-3 text-[#0070BB] mt-0.5 shrink-0" />
+                  <span>{point}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div className="p-3 rounded-lg bg-[#0070BB]/5 border border-[#0070BB]/10">
+            <p className="text-xs font-medium text-foreground">
+              {recommendation.recommendation}
+            </p>
+          </div>
+
+          <div>
+            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2 flex items-center gap-1">
+              <AlertTriangle className="w-3 h-3 text-amber-500" />
+              Trade-offs
+            </h4>
+            <ul className="space-y-1.5">
+              {recommendation.tradeoffs.map((tradeoff, i) => (
+                <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                  <span className="text-amber-500 mt-0.5 shrink-0">
+                    &bull;
+                  </span>
+                  <span>{tradeoff}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-4">
+          <p className="text-sm text-muted-foreground mb-2">
+            Failed to load recommendation.
           </p>
-        )}
-      </div>
+          <button
+            onClick={fetchRecommendation}
+            className="text-xs text-[#0070BB] hover:underline flex items-center gap-1 mx-auto"
+          >
+            <RefreshCw className="w-3 h-3" />
+            Try again
+          </button>
+        </div>
+      )}
     </div>
   );
 }

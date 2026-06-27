@@ -6,6 +6,8 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const INR_RATE = 83;
+
 export function computeKPIs(event: SourcingEvent): KPI[] {
   const vendors = event.vendors;
   const vendorCount = vendors.length;
@@ -13,8 +15,8 @@ export function computeKPIs(event: SourcingEvent): KPI[] {
   const allTotalPrices = vendors.map((v) =>
     v.lineItems.reduce((sum, item) => sum + item.totalPrice, 0)
   );
-  const lowestTotal = Math.min(...allTotalPrices);
-  const highestTotal = Math.max(...allTotalPrices);
+  const lowestTotal = Math.min(...allTotalPrices) * INR_RATE;
+  const highestTotal = Math.max(...allTotalPrices) * INR_RATE;
 
   const allLeadTimes = vendors.flatMap((v) =>
     v.lineItems.map((item) => item.leadTimeDays)
@@ -37,8 +39,8 @@ export function computeKPIs(event: SourcingEvent): KPI[] {
     },
     {
       label: "Quote Range",
-      value: `$${(lowestTotal / 1000).toFixed(0)}K – $${(highestTotal / 1000).toFixed(0)}K`,
-      subtext: `$${((highestTotal - lowestTotal) / 1000).toFixed(0)}K spread`,
+      value: `₹${(lowestTotal / 100000).toFixed(1)}L – ₹${(highestTotal / 100000).toFixed(1)}L`,
+      subtext: `₹${((highestTotal - lowestTotal) / 100000).toFixed(1)}L spread`,
       trend: "neutral",
     },
     {
@@ -57,14 +59,14 @@ export function computeKPIs(event: SourcingEvent): KPI[] {
 }
 
 export function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("en-US", {
+  return new Intl.NumberFormat("en-IN", {
     style: "currency",
-    currency: "USD",
+    currency: "INR",
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
-  }).format(amount);
+  }).format(amount * INR_RATE);
 }
 
 export function formatNumber(num: number): string {
-  return new Intl.NumberFormat("en-US").format(num);
+  return new Intl.NumberFormat("en-IN").format(num);
 }

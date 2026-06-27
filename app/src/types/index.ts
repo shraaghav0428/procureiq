@@ -7,6 +7,9 @@ export type OrderType = "One-Time" | "Annual Contract" | "Blanket Order";
 export interface LineItem {
   itemId: string;
   itemName: string;
+  itemDescription: string;
+  hsnCode: string;
+  gstPercent: number;
   uom: string;
   qtyPerBatch: number;
   annualQty: number;
@@ -27,6 +30,8 @@ export interface LineItem {
 export interface Vendor {
   id: string;
   name: string;
+  quoteId: string;
+  termsAndConditions: string;
   lineItems: LineItem[];
 }
 
