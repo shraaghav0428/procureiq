@@ -37,7 +37,7 @@ function PriceChange({ currentPrice, previousPrice, showPrevious }: { currentPri
         ) : (
           <TrendingUp className="w-2.5 h-2.5" />
         )}
-        {absChange.toFixed(1)}%
+        {absChange.toFixed(2)}%
       </span>
       {showPrevious && (
         <span className="relative ml-0.5 group">
