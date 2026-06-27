@@ -13,6 +13,13 @@ function getClient(): GoogleGenerativeAI {
   return genAI;
 }
 
+function cleanResponse(text: string): string {
+  return text
+    .replace(/```json\s*/gi, "")
+    .replace(/```\s*/g, "")
+    .trim();
+}
+
 export async function generateResponse(
   systemPrompt: string,
   userPrompt: string
@@ -21,10 +28,11 @@ export async function generateResponse(
   const model = client.getGenerativeModel({
     model: "gemini-2.5-flash",
     systemInstruction: systemPrompt,
+    generationConfig: { thinking: { thinkingBudget: 0 } } as never,
   });
 
   const result = await model.generateContent(userPrompt);
-  return result.response.text();
+  return cleanResponse(result.response.text());
 }
 
 export async function* generateStreamingResponse(
@@ -35,6 +43,7 @@ export async function* generateStreamingResponse(
   const model = client.getGenerativeModel({
     model: "gemini-2.5-flash",
     systemInstruction: systemPrompt,
+    generationConfig: { thinking: { thinkingBudget: 0 } } as never,
   });
 
   const result = await model.generateContentStream(userPrompt);
@@ -42,7 +51,7 @@ export async function* generateStreamingResponse(
   for await (const chunk of result.stream) {
     const text = chunk.text();
     if (text) {
-      yield text;
+      yield cleanResponse(text);
     }
   }
 }

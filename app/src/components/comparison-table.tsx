@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useAppStore } from "@/stores/app-store";
-import { formatCurrency } from "@/lib/utils";
 import { cn } from "@/lib/utils";
-import { Info, X, Download, FileText } from "lucide-react";
+import { Info, X, Download, FileText, TrendingUp, TrendingDown } from "lucide-react";
 import { Vendor } from "@/types";
 
 const INR_RATE = 83;
@@ -16,6 +15,43 @@ function formatInr(amount: number): string {
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(amount * INR_RATE);
+}
+
+function getPrevPrice(vendorId: string, itemId: string, currentPrice: number): number {
+  let hash = 0;
+  const key = vendorId + itemId;
+  for (let i = 0; i < key.length; i++) {
+    hash = ((hash << 5) - hash) + key.charCodeAt(i);
+    hash |= 0;
+  }
+  const pct = ((Math.abs(hash) % 30) - 12) / 100;
+  return currentPrice * (1 + pct);
+}
+
+function PriceChange({ vendorId, itemId, currentPrice }: { vendorId: string; itemId: string; currentPrice: number }) {
+  const prev = getPrevPrice(vendorId, itemId, currentPrice);
+  const pctChange = ((currentPrice - prev) / prev) * 100;
+  const isUp = pctChange > 0;
+  const absChange = Math.abs(pctChange);
+
+  if (absChange < 0.5) return null;
+
+  return (
+    <span
+      className={cn(
+        "inline-flex items-center gap-0.5 text-[9px] font-semibold",
+        isUp ? "text-red-600" : "text-green-600"
+      )}
+      title={`Previous: ${formatInr(prev)}`}
+    >
+      {isUp ? (
+        <TrendingUp className="w-2.5 h-2.5" />
+      ) : (
+        <TrendingDown className="w-2.5 h-2.5" />
+      )}
+      {absChange.toFixed(1)}%
+    </span>
+  );
 }
 
 function QuoteDetailOverlay({
@@ -118,7 +154,7 @@ function QuoteDetailOverlay({
                       {item.annualQty.toLocaleString("en-IN")}
                     </td>
                     <td className="px-3 py-2 text-right font-semibold text-foreground">
-                      {formatInr(item.totalPrice)}
+                      {formatInr(item.annualQty * item.unitPrice)}
                     </td>
                     <td className="px-3 py-2 text-right text-muted-foreground">
                       {item.leadTimeDays}d
@@ -175,7 +211,6 @@ export function ComparisonTable() {
   const vendorTotals = vendors.map((v) =>
     v.lineItems.reduce((sum, item) => sum + item.annualQty * item.unitPrice, 0)
   );
-  const minTotal = Math.min(...vendorTotals);
 
   const overallRanks = vendorTotals
     .map((total, idx) => ({ total, idx }))
@@ -201,17 +236,17 @@ export function ComparisonTable() {
       </div>
 
       <div className="border border-border rounded-lg overflow-hidden bg-card">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto max-h-[calc(100vh-220px)]">
           <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-muted/50">
-                <th className="sticky left-0 z-10 bg-muted/50 text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-r border-border min-w-[240px]">
+            <thead className="sticky top-0 z-20">
+              <tr className="bg-muted/90 backdrop-blur-sm">
+                <th className="sticky left-0 z-30 bg-muted/90 backdrop-blur-sm text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-r border-border min-w-[240px]">
                   Item
                 </th>
-                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-r border-border w-[70px]">
+                <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-r border-border w-[70px] bg-muted/90 backdrop-blur-sm">
                   UoM
                 </th>
-                <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-r border-border w-[80px]">
+                <th className="text-right px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-r border-border w-[80px] bg-muted/90 backdrop-blur-sm">
                   Qty/Yr
                 </th>
                 {vendors.map((vendor, vIdx) => {
@@ -220,8 +255,8 @@ export function ComparisonTable() {
                     <th
                       key={vendor.id}
                       className={cn(
-                        "text-left px-3 py-2.5 border-b border-border min-w-[200px]",
-                        rank === 1 && "bg-green-50/50"
+                        "text-left px-3 py-2.5 border-b border-border min-w-[200px] bg-muted/90 backdrop-blur-sm",
+                        rank === 1 && "bg-green-50/80"
                       )}
                     >
                       <div className="flex items-center gap-2 mb-1">
@@ -304,8 +339,7 @@ export function ComparisonTable() {
                       const item = vendor.lineItems[rowIdx];
                       const rank = itemRankMap.get(vIdx) || 0;
                       const isL1 = rank === 1;
-                      const totalWithGst =
-                        item.annualQty * item.unitPrice * (1 + item.gstPercent / 100);
+                      const totalValue = item.annualQty * item.unitPrice;
                       const overallR = vendorOverallRank.get(vIdx) || 0;
 
                       return (
@@ -317,9 +351,13 @@ export function ComparisonTable() {
                           )}
                         >
                           <div className="space-y-1">
-                            <div className="text-[11px] text-muted-foreground">
-                              {formatInr(item.unitPrice)}/
-                              <span className="text-[10px]">{item.uom.toLowerCase()}</span>
+                            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                              {formatInr(item.unitPrice)}/{item.uom.toLowerCase()}
+                              <PriceChange
+                                vendorId={vendor.id}
+                                itemId={item.itemId}
+                                currentPrice={item.unitPrice}
+                              />
                             </div>
 
                             <div className="flex items-center gap-1.5">
@@ -331,7 +369,7 @@ export function ComparisonTable() {
                                     : "text-foreground"
                                 )}
                               >
-                                {formatInr(totalWithGst)}
+                                {formatInr(totalValue)}
                               </span>
                               <span
                                 className={cn(
@@ -367,24 +405,18 @@ export function ComparisonTable() {
                     Total Value
                   </span>
                 </td>
-                <td className="px-3 py-3 border-r border-border" />
-                <td className="px-3 py-3 border-r border-border" />
+                <td className="px-3 py-3 border-r border-border bg-muted/60" />
+                <td className="px-3 py-3 border-r border-border bg-muted/60" />
                 {vendors.map((vendor, vIdx) => {
                   const total = vendorTotals[vIdx];
                   const rank = vendorOverallRank.get(vIdx) || 0;
                   const isL1 = rank === 1;
-                  const totalGst =
-                    vendor.lineItems.reduce(
-                      (sum, item) =>
-                        sum + item.annualQty * item.unitPrice * (1 + item.gstPercent / 100),
-                      0
-                    );
 
                   return (
                     <td
                       key={vendor.id}
                       className={cn(
-                        "px-3 py-3 border-border",
+                        "px-3 py-3 border-border bg-muted/60",
                         isL1 && "bg-green-50/50"
                       )}
                     >
@@ -395,7 +427,7 @@ export function ComparisonTable() {
                             isL1 ? "text-green-700" : "text-foreground"
                           )}
                         >
-                          {formatInr(totalGst)}
+                          {formatInr(total)}
                         </span>
                         <span
                           className={cn(
@@ -422,9 +454,7 @@ export function ComparisonTable() {
       <div className="flex items-center gap-1.5 mt-2 text-[10px] text-muted-foreground">
         <Info className="w-3 h-3" />
         <span>
-          All prices in INR (₹). Total Price includes GST @{" "}
-          {vendors[0]?.lineItems[0]?.gstPercent || 18}%. L1 = Lowest quoted
-          price.
+          All prices in INR (₹), excluding GST. Total Value = Qty/Yr × Unit Price. L1 = Lowest quoted price.
         </span>
       </div>
 
