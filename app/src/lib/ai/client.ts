@@ -28,7 +28,6 @@ export async function generateResponse(
   const model = client.getGenerativeModel({
     model: "gemini-2.5-flash",
     systemInstruction: systemPrompt,
-    generationConfig: { thinking: { thinkingBudget: 0 } } as never,
   });
 
   const result = await model.generateContent(userPrompt);
@@ -43,7 +42,6 @@ export async function* generateStreamingResponse(
   const model = client.getGenerativeModel({
     model: "gemini-2.5-flash",
     systemInstruction: systemPrompt,
-    generationConfig: { thinking: { thinkingBudget: 0 } } as never,
   });
 
   const result = await model.generateContentStream(userPrompt);
