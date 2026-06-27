@@ -121,6 +121,9 @@ function QuoteDetailOverlay({
                   <th className="text-center px-3 py-2 font-semibold text-muted-foreground uppercase tracking-wider">
                     Compliance
                   </th>
+                  <th className="text-left px-3 py-2 font-semibold text-muted-foreground uppercase tracking-wider">
+                    Certifications
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -169,6 +172,22 @@ function QuoteDetailOverlay({
                       >
                         {item.technicalCompliance ? "Yes" : "No"}
                       </span>
+                    </td>
+                    <td className="px-3 py-2">
+                      {item.certifications.length > 0 ? (
+                        <div className="flex flex-wrap gap-0.5">
+                          {item.certifications.map((cert) => (
+                            <span
+                              key={cert}
+                              className="text-[8px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium"
+                            >
+                              {cert}
+                            </span>
+                          ))}
+                        </div>
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground/50">—</span>
+                      )}
                     </td>
                   </tr>
                 ))}

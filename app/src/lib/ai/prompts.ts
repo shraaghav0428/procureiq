@@ -8,9 +8,8 @@ function serializeEventData(event: SourcingEvent): string {
       const items = vendor.lineItems
         .map(
           (item) =>
-            `  - ${item.itemId} ${item.itemName} (HSN: ${item.hsnCode}): ₹${(item.unitPrice * INR_RATE).toLocaleString("en-IN")}/unit (Previous: ₹${(item.previousUnitPrice * INR_RATE).toLocaleString("en-IN")}/unit), Total ₹${(item.totalPrice * INR_RATE).toLocaleString("en-IN")}, ` +
+            `  - ${item.itemId} ${item.itemName} (HSN: ${item.hsnCode}): ₹${(item.unitPrice * INR_RATE).toLocaleString("en-IN")}/unit (Previous: ₹${(item.previousUnitPrice * INR_RATE).toLocaleString("en-IN")}/unit), Qty/Yr: ${item.annualQty}, Total Value: ₹${(item.annualQty * item.unitPrice * INR_RATE).toLocaleString("en-IN")} (${item.annualQty} × ₹${(item.unitPrice * INR_RATE).toLocaleString("en-IN")}), ` +
             `Lead ${item.leadTimeDays}d, ${item.paymentTerms}, ${item.incoterms}, ` +
-            `Qty/Year: ${item.annualQty}, ` +
             `Compliance: ${item.technicalCompliance ? "Yes" : "No"}, ` +
             `Rating: ${item.historicalRating}/5, Risk: ${item.riskLevel}, ` +
             `Certs: ${item.certifications.length > 0 ? item.certifications.join(", ") : "None"}, ` +
@@ -44,6 +43,7 @@ ${serializeEventData(event)}
 
 RULES:
 - Only answer using the data provided above. Never make up information.
+- Total Value for any item = Qty/Yr × Unit Price. Use only this formula. The Total Value is already computed in the data — use it directly, do not recalculate.
 - If information is not available in the dataset, say "I couldn't find this information in the current sourcing event."
 - All prices are in Indian Rupees (₹ / INR). Always quote prices in INR.
 - Cite specific data points (prices, lead times, ratings) in your answers.
