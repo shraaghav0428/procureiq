@@ -40,11 +40,13 @@ function PriceChange({ currentPrice, previousPrice, showPrevious }: { currentPri
         {absChange.toFixed(1)}%
       </span>
       {showPrevious && (
-        <span
-          className="ml-0.5 text-[8px] text-muted-foreground/70 cursor-help border-b border-dotted border-muted-foreground/40"
-          title={`Previously bought at ${formatInr(previousPrice)}`}
-        >
-          prev
+        <span className="relative ml-0.5 group">
+          <span className="inline-flex items-center justify-center w-3 h-3 rounded-full bg-muted-foreground/20 text-[7px] font-bold text-muted-foreground cursor-help">
+            i
+          </span>
+          <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-lg z-50">
+            Previously bought at {formatInr(previousPrice)}
+          </span>
         </span>
       )}
     </span>
