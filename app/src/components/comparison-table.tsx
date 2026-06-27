@@ -269,6 +269,9 @@ export function ComparisonTable() {
                 </th>
                 {vendors.map((vendor, vIdx) => {
                   const rank = vendorOverallRank.get(vIdx) || 0;
+                  const avgRating =
+                    vendor.lineItems.reduce((s, i) => s + i.historicalRating, 0) /
+                    vendor.lineItems.length;
                   return (
                     <th
                       key={vendor.id}
@@ -291,6 +294,9 @@ export function ComparisonTable() {
                         <div className="flex-1 min-w-0">
                           <span className="text-xs font-semibold text-foreground block truncate">
                             {vendor.name}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground">
+                            ★ {avgRating.toFixed(1)}
                           </span>
                         </div>
                         {rank === 1 && (
