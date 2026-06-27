@@ -7,6 +7,10 @@ import {
 } from "@/types";
 import { computeKPIs, formatCurrency } from "@/lib/utils";
 
+function pdfSafe(text: string): string {
+  return text.replace(/₹/g, "Rs.").replace(/[–—]/g, "-");
+}
+
 export async function generatePDF(
   event: SourcingEvent,
   recommendation: AIRecommendation | null,
@@ -47,7 +51,7 @@ export async function generatePDF(
   doc.text("Key Metrics", 14, y);
   y += 7;
 
-  const kpiData = kpis.map((k) => [k.label, k.value, k.subtext || ""]);
+  const kpiData = kpis.map((k) => [k.label, pdfSafe(k.value), pdfSafe(k.subtext || "")]);
   autoTable(doc, {
     startY: y,
     head: [["Metric", "Value", "Detail"]],
@@ -76,7 +80,7 @@ export async function generatePDF(
 
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
-    const answerLines = doc.splitTextToSize(recommendation.answer, pageWidth - 28);
+    const answerLines = doc.splitTextToSize(pdfSafe(recommendation.answer), pageWidth - 28);
     doc.text(answerLines, 14, y);
     y += answerLines.length * 4 + 4;
 
@@ -85,7 +89,7 @@ export async function generatePDF(
     y += 5;
     doc.setFont("helvetica", "normal");
     recommendation.evidence.forEach((e) => {
-      const lines = doc.splitTextToSize(`• ${e}`, pageWidth - 32);
+      const lines = doc.splitTextToSize(pdfSafe(`• ${e}`), pageWidth - 32);
       if (y > 270) { doc.addPage(); y = 20; }
       doc.text(lines, 18, y);
       y += lines.length * 4 + 1;
@@ -97,7 +101,7 @@ export async function generatePDF(
     y += 5;
     doc.setFont("helvetica", "normal");
     recommendation.tradeoffs.forEach((t) => {
-      const lines = doc.splitTextToSize(`• ${t}`, pageWidth - 32);
+      const lines = doc.splitTextToSize(pdfSafe(`• ${t}`), pageWidth - 32);
       if (y > 270) { doc.addPage(); y = 20; }
       doc.text(lines, 18, y);
       y += lines.length * 4 + 1;
@@ -116,7 +120,7 @@ export async function generatePDF(
     doc.setFontSize(8);
     doc.setFont("helvetica", "normal");
     doc.setTextColor(17, 24, 39);
-    const overviewLines = doc.splitTextToSize(summary.overview, pageWidth - 28);
+    const overviewLines = doc.splitTextToSize(pdfSafe(summary.overview), pageWidth - 28);
     doc.text(overviewLines, 14, y);
     y += overviewLines.length * 4 + 4;
 
@@ -125,7 +129,7 @@ export async function generatePDF(
     y += 5;
     doc.setFont("helvetica", "normal");
     summary.keyFindings.forEach((f) => {
-      const lines = doc.splitTextToSize(`• ${f}`, pageWidth - 32);
+      const lines = doc.splitTextToSize(pdfSafe(`• ${f}`), pageWidth - 32);
       if (y > 270) { doc.addPage(); y = 20; }
       doc.text(lines, 18, y);
       y += lines.length * 4 + 1;
@@ -137,7 +141,7 @@ export async function generatePDF(
     y += 5;
     doc.setFont("helvetica", "normal");
     summary.risks.forEach((r) => {
-      const lines = doc.splitTextToSize(`• ${r}`, pageWidth - 32);
+      const lines = doc.splitTextToSize(pdfSafe(`• ${r}`), pageWidth - 32);
       if (y > 270) { doc.addPage(); y = 20; }
       doc.text(lines, 18, y);
       y += lines.length * 4 + 1;
@@ -159,7 +163,7 @@ export async function generatePDF(
       `${item.itemId}\n${item.itemName}`,
       ...event.vendors.map((v) => {
         const li = v.lineItems[idx];
-        return `${formatCurrency(li.unitPrice)}/unit\nLead: ${li.leadTimeDays}d\n${li.technicalCompliance ? "Compliant" : "Non-compliant"}\nRisk: ${li.riskLevel}`;
+        return `${pdfSafe(formatCurrency(li.unitPrice))}/unit\nLead: ${li.leadTimeDays}d\n${li.technicalCompliance ? "Compliant" : "Non-compliant"}\nRisk: ${li.riskLevel}`;
       }),
     ];
   });
@@ -182,7 +186,7 @@ export async function generatePDF(
     doc.setFontSize(7);
     doc.setTextColor(156, 163, 175);
     doc.text(
-      `ProcureIQ Report — ${event.name} — Page ${i}/${pageCount}`,
+      `ProcureIQ Report - ${event.name} - Page ${i}/${pageCount}`,
       pageWidth / 2,
       doc.internal.pageSize.getHeight() - 8,
       { align: "center" }
