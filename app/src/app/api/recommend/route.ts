@@ -1,0 +1,42 @@
+import { NextRequest, NextResponse } from "next/server";
+import { generateResponse } from "@/lib/ai/client";
+import { getSystemPrompt, getRecommendationPrompt } from "@/lib/ai/prompts";
+import { getEventById } from "@/data/events";
+import { Persona } from "@/types";
+
+export async function POST(request: NextRequest) {
+  try {
+    const { eventId, persona } = (await request.json()) as {
+      eventId: string;
+      persona: Persona;
+    };
+
+    const event = getEventById(eventId);
+    if (!event) {
+      return NextResponse.json({ error: "Event not found" }, { status: 404 });
+    }
+
+    const systemPrompt = getSystemPrompt(event, persona);
+    const userPrompt = getRecommendationPrompt(event, persona);
+
+    const response = await generateResponse(systemPrompt, userPrompt);
+
+    const jsonMatch = response.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return NextResponse.json(
+        { error: "Failed to parse AI response" },
+        { status: 500 }
+      );
+    }
+
+    const recommendation = JSON.parse(jsonMatch[0]);
+    return NextResponse.json(recommendation);
+  } catch (error: unknown) {
+    console.error("Recommendation error:", error);
+    const status = error instanceof Error && error.message?.includes("429") ? 429 : 500;
+    return NextResponse.json(
+      { error: "Failed to generate recommendation" },
+      { status }
+    );
+  }
+}
