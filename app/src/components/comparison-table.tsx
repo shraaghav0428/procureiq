@@ -17,39 +17,36 @@ function formatInr(amount: number): string {
   }).format(amount * INR_RATE);
 }
 
-function getPrevPrice(vendorId: string, itemId: string, currentPrice: number): number {
-  let hash = 0;
-  const key = vendorId + itemId;
-  for (let i = 0; i < key.length; i++) {
-    hash = ((hash << 5) - hash) + key.charCodeAt(i);
-    hash |= 0;
-  }
-  const pct = ((Math.abs(hash) % 30) - 12) / 100;
-  return currentPrice * (1 + pct);
-}
-
-function PriceChange({ vendorId, itemId, currentPrice }: { vendorId: string; itemId: string; currentPrice: number }) {
-  const prev = getPrevPrice(vendorId, itemId, currentPrice);
-  const pctChange = ((currentPrice - prev) / prev) * 100;
+function PriceChange({ currentPrice, previousPrice, showPrevious }: { currentPrice: number; previousPrice: number; showPrevious: boolean }) {
+  const pctChange = ((currentPrice - previousPrice) / previousPrice) * 100;
   const isUp = pctChange > 0;
   const absChange = Math.abs(pctChange);
 
   if (absChange < 0.5) return null;
 
   return (
-    <span
-      className={cn(
-        "inline-flex items-center gap-0.5 text-[9px] font-semibold",
-        isUp ? "text-red-600" : "text-green-600"
+    <span className="inline-flex items-center gap-0.5">
+      <span
+        className={cn(
+          "inline-flex items-center gap-0.5 text-[9px] font-semibold",
+          isUp ? "text-red-600" : "text-green-600"
+        )}
+      >
+        {isUp ? (
+          <TrendingUp className="w-2.5 h-2.5" />
+        ) : (
+          <TrendingDown className="w-2.5 h-2.5" />
+        )}
+        {absChange.toFixed(1)}%
+      </span>
+      {showPrevious && (
+        <span
+          className="inline-flex items-center ml-0.5 text-muted-foreground/60 cursor-help"
+          title={`Previously bought at ${formatInr(previousPrice)}`}
+        >
+          <Info className="w-2.5 h-2.5" />
+        </span>
       )}
-      title={`Previous: ${formatInr(prev)}`}
-    >
-      {isUp ? (
-        <TrendingUp className="w-2.5 h-2.5" />
-      ) : (
-        <TrendingDown className="w-2.5 h-2.5" />
-      )}
-      {absChange.toFixed(1)}%
     </span>
   );
 }
@@ -354,9 +351,9 @@ export function ComparisonTable() {
                             <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
                               {formatInr(item.unitPrice)}/{item.uom.toLowerCase()}
                               <PriceChange
-                                vendorId={vendor.id}
-                                itemId={item.itemId}
                                 currentPrice={item.unitPrice}
+                                previousPrice={item.previousUnitPrice}
+                                showPrevious={isL1}
                               />
                             </div>
 

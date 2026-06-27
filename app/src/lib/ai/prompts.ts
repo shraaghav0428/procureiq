@@ -8,7 +8,7 @@ function serializeEventData(event: SourcingEvent): string {
       const items = vendor.lineItems
         .map(
           (item) =>
-            `  - ${item.itemId} ${item.itemName} (HSN: ${item.hsnCode}): ₹${(item.unitPrice * INR_RATE).toLocaleString("en-IN")}/unit, Total ₹${(item.totalPrice * INR_RATE).toLocaleString("en-IN")}, ` +
+            `  - ${item.itemId} ${item.itemName} (HSN: ${item.hsnCode}): ₹${(item.unitPrice * INR_RATE).toLocaleString("en-IN")}/unit (Previous: ₹${(item.previousUnitPrice * INR_RATE).toLocaleString("en-IN")}/unit), Total ₹${(item.totalPrice * INR_RATE).toLocaleString("en-IN")}, ` +
             `Lead ${item.leadTimeDays}d, ${item.paymentTerms}, ${item.incoterms}, ` +
             `Qty/Year: ${item.annualQty}, ` +
             `Compliance: ${item.technicalCompliance ? "Yes" : "No"}, ` +

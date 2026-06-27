@@ -15,6 +15,7 @@ export interface LineItem {
   annualQty: number;
   orderType: OrderType;
   unitPrice: number;
+  previousUnitPrice: number;
   totalPrice: number;
   paymentTerms: string;
   incoterms: string;
