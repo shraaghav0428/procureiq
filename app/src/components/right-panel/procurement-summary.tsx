@@ -15,8 +15,6 @@ export function ProcurementSummaryCard() {
     selectedEvent,
     persona,
     summary,
-    recommendation,
-    isLoadingRecommendation,
     isLoadingSummary,
     setSummary,
     setIsLoadingSummary,
@@ -64,11 +62,10 @@ export function ProcurementSummaryCard() {
   }, [selectedEvent.id, persona]);
 
   useEffect(() => {
-    if (recommendation && !isLoadingRecommendation) {
-      const timer = setTimeout(fetchSummary, 2000);
-      return () => clearTimeout(timer);
+    if (!summary && !isLoadingSummary) {
+      fetchSummary();
     }
-  }, [recommendation, isLoadingRecommendation, fetchSummary]);
+  }, [selectedEvent.id, persona]);
 
   return (
     <div>
