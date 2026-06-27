@@ -22,7 +22,7 @@ export async function generateResponse(
   const anthropic = getClient();
   const message = await anthropic.messages.create({
     model: MODEL,
-    max_tokens: 1024,
+    max_tokens: 2048,
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
   });
@@ -39,7 +39,7 @@ export async function* generateStreamingResponse(
 
   const stream = anthropic.messages.stream({
     model: MODEL,
-    max_tokens: 1024,
+    max_tokens: 2048,
     system: systemPrompt,
     messages: [{ role: "user", content: userPrompt }],
   });

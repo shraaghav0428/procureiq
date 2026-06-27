@@ -21,6 +21,71 @@ function serializeEventData(event: SourcingEvent): string {
     .join("\n\n");
 }
 
+function computeRankings(event: SourcingEvent): string {
+  const vendors = event.vendors;
+  const lineItemCount = vendors[0].lineItems.length;
+  const lines: string[] = [];
+
+  lines.push("L-RANKING PER LINE ITEM (L1 = Lowest Total Value, L2 = Second Lowest, etc.):");
+
+  for (let i = 0; i < lineItemCount; i++) {
+    const item = vendors[0].lineItems[i];
+    const vendorPrices = vendors.map((v) => ({
+      name: v.name,
+      unitPrice: v.lineItems[i].unitPrice * INR_RATE,
+      totalValue: v.lineItems[i].annualQty * v.lineItems[i].unitPrice * INR_RATE,
+    }));
+    vendorPrices.sort((a, b) => a.totalValue - b.totalValue);
+    const ranked = vendorPrices
+      .map((vp, rank) => `L${rank + 1}: ${vp.name} (₹${vp.unitPrice.toLocaleString("en-IN")}/unit, Total: ₹${vp.totalValue.toLocaleString("en-IN")})`)
+      .join(", ");
+    lines.push(`  ${item.itemName}: ${ranked}`);
+  }
+
+  const vendorTotals = vendors.map((v) => ({
+    name: v.name,
+    total: v.lineItems.reduce((sum, item) => sum + item.annualQty * item.unitPrice * INR_RATE, 0),
+  }));
+  vendorTotals.sort((a, b) => a.total - b.total);
+
+  lines.push("");
+  lines.push("OVERALL VENDOR RANKING (by total value across all items):");
+  vendorTotals.forEach((vt, rank) => {
+    lines.push(`  L${rank + 1} Overall: ${vt.name} — Total: ₹${vt.total.toLocaleString("en-IN")}`);
+  });
+
+  const l1Total = vendorTotals[0].total;
+  lines.push("");
+  lines.push("SAVINGS IF AWARDING ALL ITEMS TO L1 OVERALL VS OTHER VENDORS:");
+  for (let r = 1; r < vendorTotals.length; r++) {
+    const saving = vendorTotals[r].total - l1Total;
+    const pct = ((saving / vendorTotals[r].total) * 100).toFixed(1);
+    lines.push(`  vs ${vendorTotals[r].name} (L${r + 1}): Save ₹${saving.toLocaleString("en-IN")} (${pct}%)`);
+  }
+
+  const l1PerItem: { item: string; vendor: string; totalValue: number }[] = [];
+  for (let i = 0; i < lineItemCount; i++) {
+    const vendorPrices = vendors.map((v) => ({
+      name: v.name,
+      totalValue: v.lineItems[i].annualQty * v.lineItems[i].unitPrice * INR_RATE,
+    }));
+    vendorPrices.sort((a, b) => a.totalValue - b.totalValue);
+    l1PerItem.push({ item: vendors[0].lineItems[i].itemName, vendor: vendorPrices[0].name, totalValue: vendorPrices[0].totalValue });
+  }
+
+  const bestPickTotal = l1PerItem.reduce((sum, ip) => sum + ip.totalValue, 0);
+  lines.push("");
+  lines.push(`BEST POSSIBLE TOTAL (cherry-picking L1 per each item): ₹${bestPickTotal.toLocaleString("en-IN")}`);
+  for (const vt of vendorTotals) {
+    const saving = vt.total - bestPickTotal;
+    if (saving > 0) {
+      lines.push(`  vs ${vt.name}: Save ₹${saving.toLocaleString("en-IN")} by cherry-picking L1 per item`);
+    }
+  }
+
+  return lines.join("\n");
+}
+
 export function getSystemPrompt(
   event: SourcingEvent,
   persona: Persona
@@ -41,6 +106,16 @@ DESCRIPTION: ${event.description}
 VENDOR DATA (all prices in INR):
 ${serializeEventData(event)}
 
+${computeRankings(event)}
+
+PROCUREMENT TERMINOLOGY:
+- L1 = Lowest quoted vendor (lowest total value for that item or overall). This is the most competitive bidder.
+- L2 = Second lowest quoted vendor.
+- L3, L4, L5 = Third, fourth, fifth lowest respectively.
+- "Going with L1" means awarding to the lowest bidder.
+- L-ranking is computed per line item (each item has its own L1, L2, etc.) AND overall (sum of all items).
+- When user asks about "L1 savings", they mean: how much do we save by choosing the lowest bidder vs others.
+
 RULES:
 - Only answer using the data provided above. Never make up information.
 - Total Value for any item = Qty/Yr × Unit Price. Use only this formula. The Total Value is already computed in the data — use it directly, do not recalculate.
@@ -50,6 +125,7 @@ RULES:
 - Keep answers crisp and short. Avoid long paragraphs. Use bullet points where possible.
 - When comparing vendors, use concrete numbers, not vague language.
 - Flag risks proactively when they affect the question being asked.
+- Use the pre-computed L-rankings above when answering about L1/L2/L3. Do NOT assume vendor order in the data equals L-ranking.
 
 GUARDRAILS:
 1. DATASET GROUNDING: Answer only from the procurement dataset above. Never fabricate supplier capabilities, certifications, financial information, or commercial terms.
@@ -61,11 +137,27 @@ GUARDRAILS:
 7. USE NUMBERS: Whenever possible, quote specific prices, quantities, lead times, and totals instead of qualitative answers.
 8. NEUTRAL LANGUAGE: Never criticize suppliers. Say "higher quoted price" rather than "bad supplier."
 
+CHART OUTPUT:
+When the user asks for a comparison that would benefit from a visual chart (savings, cost comparison, price spread, etc.), include a chart block in your response using this exact format:
+
+[CHART]
+{"type":"bar","title":"Chart Title","labels":["Label1","Label2"],"datasets":[{"label":"Series Name","data":[100,200]}]}
+[/CHART]
+
+Rules for charts:
+- type can be "bar" or "horizontal_bar"
+- All values must be numbers (no currency symbols in data, but use them in the title)
+- labels are the x-axis categories (vendor names, item names, etc.)
+- datasets is an array — you can have multiple series for grouped comparisons
+- Include the chart ALONGSIDE your text explanation, not instead of it
+- Use charts for: savings comparisons, vendor cost comparisons, price spreads, lead time comparisons
+- All monetary values in charts should be in INR (raw numbers, the UI will format them)
+
 FORMATTING:
 - Use **bold** for emphasis and headings.
 - Use bullet points (- ) for lists.
 - Do NOT use code blocks, markdown code fences, or any \`\`\` markers.
-- Keep responses plain text with bold and bullets only.`;
+- Keep responses plain text with bold and bullets only (except for [CHART] blocks).`;
 }
 
 export function getRecommendationPrompt(
