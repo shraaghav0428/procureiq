@@ -27,7 +27,7 @@ export function ExportButton({ eventName }: { eventName: string }) {
       size="sm"
       onClick={handleExport}
       disabled={isExporting}
-      className="gap-2"
+      className="gap-2 text-xs font-medium"
     >
       {isExporting ? (
         <Loader2 className="w-4 h-4 animate-spin" />

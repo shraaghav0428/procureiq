@@ -17,6 +17,8 @@ interface AppState {
   isLoadingRecommendation: boolean;
   isLoadingSummary: boolean;
   isLoadingChat: boolean;
+  highlightedVendorId: string | null;
+  highlightedItemId: string | null;
 
   setPersona: (persona: Persona) => void;
   setSelectedEvent: (eventId: string) => void;
@@ -28,6 +30,8 @@ interface AppState {
   setIsLoadingRecommendation: (loading: boolean) => void;
   setIsLoadingSummary: (loading: boolean) => void;
   setIsLoadingChat: (loading: boolean) => void;
+  highlightVendor: (vendorId: string | null) => void;
+  highlightItem: (itemId: string | null) => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -39,6 +43,8 @@ export const useAppStore = create<AppState>((set) => ({
   isLoadingRecommendation: false,
   isLoadingSummary: false,
   isLoadingChat: false,
+  highlightedVendorId: null,
+  highlightedItemId: null,
 
   setPersona: (persona) => set({ persona }),
 
@@ -75,4 +81,13 @@ export const useAppStore = create<AppState>((set) => ({
     set({ isLoadingRecommendation }),
   setIsLoadingSummary: (isLoadingSummary) => set({ isLoadingSummary }),
   setIsLoadingChat: (isLoadingChat) => set({ isLoadingChat }),
+
+  highlightVendor: (vendorId) => {
+    set({ highlightedVendorId: vendorId });
+    if (vendorId) setTimeout(() => set({ highlightedVendorId: null }), 3000);
+  },
+  highlightItem: (itemId) => {
+    set({ highlightedItemId: itemId });
+    if (itemId) setTimeout(() => set({ highlightedItemId: null }), 3000);
+  },
 }));

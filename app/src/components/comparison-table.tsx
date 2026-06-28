@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAppStore } from "@/stores/app-store";
 import { cn } from "@/lib/utils";
-import { Info, X, Download, FileText, TrendingUp, TrendingDown } from "lucide-react";
+import { X, Download, FileText, TrendingUp, TrendingDown } from "lucide-react";
 import { Vendor } from "@/types";
 
 const INR_RATE = 83;
@@ -41,11 +41,11 @@ function PriceChange({ currentPrice, previousPrice, showPrevious }: { currentPri
       </span>
       {showPrevious && (
         <span className="relative ml-0.5 group">
-          <span className="inline-flex items-center justify-center w-3 h-3 rounded-full bg-muted-foreground/20 text-[7px] font-bold text-muted-foreground cursor-help">
-            i
+          <span className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-muted-foreground/15 text-[8px] font-bold text-muted-foreground hover-lift">
+            ₹
           </span>
           <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-lg z-50">
-            Previously bought at {formatInr(previousPrice)}
+            Last buy: {formatInr(previousPrice)}
           </span>
         </span>
       )}
@@ -179,7 +179,7 @@ function QuoteDetailOverlay({
                           {item.certifications.map((cert) => (
                             <span
                               key={cert}
-                              className="text-[8px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium"
+                              className="text-[9px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium"
                             >
                               {cert}
                             </span>
@@ -221,7 +221,7 @@ function QuoteDetailOverlay({
 }
 
 export function ComparisonTable() {
-  const { selectedEvent } = useAppStore();
+  const { selectedEvent, highlightedVendorId, highlightedItemId } = useAppStore();
   const vendors = selectedEvent.vendors;
   const lineItemCount = vendors[0].lineItems.length;
   const [quoteVendor, setQuoteVendor] = useState<Vendor | null>(null);
@@ -240,26 +240,64 @@ export function ComparisonTable() {
   );
 
   return (
-    <div className="p-4">
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">
-            Supplier Comparison
-          </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">
-            {selectedEvent.name} &middot; {vendors.length} vendors &middot;{" "}
-            {lineItemCount} line items
-          </p>
+    <div className="flex flex-col gap-3 h-full min-h-0">
+      {/* Section 3: Supplier Comparison + Legend */}
+      <div className="bg-card rounded-xl border border-border shadow-sm px-4 pt-4 pb-3 shrink-0">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-4">
+            <div>
+              <h2 className="text-sm font-semibold text-foreground">
+                Supplier Comparison
+              </h2>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {selectedEvent.name} &middot; {vendors.length} vendors &middot;{" "}
+                {lineItemCount} line items
+              </p>
+            </div>
+            <div className="h-8 w-px bg-border" />
+            <div className="flex items-center gap-3 text-xs">
+              <div>
+                <span className="text-muted-foreground">Quote Range </span>
+                <span className="font-semibold text-foreground">
+                  {formatInr(Math.min(...vendorTotals))} – {formatInr(Math.max(...vendorTotals))}
+                </span>
+              </div>
+              <div>
+                <span className="text-muted-foreground">Avg Lead Time </span>
+                <span className="font-semibold text-foreground">
+                  {Math.round(vendors.flatMap(v => v.lineItems.map(i => i.leadTimeDays)).reduce((a, b) => a + b, 0) / (vendors.length * lineItemCount))}d
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 py-1.5 px-3 rounded-md bg-muted/30 border border-border/50 text-[10px] text-muted-foreground flex-wrap">
+          <span className="flex items-center gap-1">
+            <span className="inline-flex items-center gap-0.5 text-green-600 font-semibold">
+              <TrendingUp className="w-2.5 h-2.5" />
+            </span>
+            Savings vs last buy
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-flex items-center gap-0.5 text-red-600 font-semibold">
+              <TrendingDown className="w-2.5 h-2.5" />
+            </span>
+            Price rose vs last buy
+          </span>
+          <span className="h-3 w-px bg-border" />
+          <span className="text-muted-foreground/70">Hover badges for details</span>
         </div>
       </div>
 
-      <div className="border border-border rounded-lg overflow-hidden bg-card">
-        <div className="overflow-x-auto max-h-[calc(100vh-220px)]">
+      {/* Section 4: Data Table */}
+      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden flex-1 min-h-0 flex flex-col">
+        <div className="overflow-auto flex-1">
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-20">
               <tr className="bg-muted/90 backdrop-blur-sm">
                 <th className="sticky left-0 z-30 bg-muted/90 backdrop-blur-sm text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-r border-border min-w-[240px]">
-                  Item
+                  Item Name / Description
                 </th>
                 <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-r border-border w-[70px] bg-muted/90 backdrop-blur-sm">
                   UoM
@@ -272,12 +310,15 @@ export function ComparisonTable() {
                   const avgRating =
                     vendor.lineItems.reduce((s, i) => s + i.historicalRating, 0) /
                     vendor.lineItems.length;
+                  const isHighlighted = highlightedVendorId === vendor.id;
                   return (
                     <th
                       key={vendor.id}
+                      data-vendor-id={vendor.id}
                       className={cn(
-                        "text-left px-3 py-2.5 border-b border-border min-w-[200px] bg-muted/90 backdrop-blur-sm",
-                        rank === 1 && "bg-green-50/80"
+                        "text-left px-3 py-2.5 border-b border-border min-w-[200px] bg-muted/90 backdrop-blur-sm transition-all duration-500",
+                        rank === 1 && "bg-green-50/80",
+                        isHighlighted && "ring-2 ring-[#0070BB] ring-inset bg-[#0070BB]/5"
                       )}
                     >
                       <div className="flex items-center gap-2 mb-1">
@@ -291,25 +332,30 @@ export function ComparisonTable() {
                         >
                           {vendor.name.charAt(0)}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <span className="text-xs font-semibold text-foreground block truncate">
+                        <div className="flex-1 min-w-0 relative group/name">
+                          <span className="text-xs font-semibold text-foreground block truncate cursor-default">
                             {vendor.name}
                           </span>
-                          <span className="text-[10px] text-muted-foreground">
-                            ★ {avgRating.toFixed(1)}
+                          <span className="absolute top-full left-0 mt-1 hidden group-hover/name:block whitespace-nowrap bg-foreground text-background text-[11px] px-2.5 py-1 rounded shadow-lg z-[60] font-semibold pointer-events-none">
+                            {vendor.name}
                           </span>
+                          <div className="flex items-center gap-1.5 mt-0.5">
+                            <span className="text-[10px] text-muted-foreground">
+                              ★ {avgRating.toFixed(1)}
+                            </span>
+                            {rank === 1 && (
+                              <span className="text-[9px] px-1.5 py-0.5 rounded-full font-bold bg-green-600 text-white">
+                                L1
+                              </span>
+                            )}
+                          </div>
                         </div>
-                        {rank === 1 && (
-                          <span className="text-[9px] bg-green-600 text-white px-1.5 py-0.5 rounded-full font-bold shrink-0">
-                            L1
-                          </span>
-                        )}
                       </div>
                       <button
                         onClick={() => setQuoteVendor(vendor)}
                         className="text-[10px] font-mono text-[#0070BB] hover:underline cursor-pointer"
                       >
-                        {vendor.quoteId}
+                        Quote: {vendor.quoteId}
                       </button>
                     </th>
                   );
@@ -335,9 +381,11 @@ export function ComparisonTable() {
                 return (
                   <tr
                     key={refItem.itemId}
+                    data-item-id={refItem.itemId}
                     className={cn(
                       "hover:bg-muted/30 transition-colors",
-                      rowIdx % 2 === 0 ? "bg-card" : "bg-muted/10"
+                      rowIdx % 2 === 0 ? "bg-card" : "bg-muted/10",
+                      highlightedItemId === refItem.itemId && "bg-[#0070BB]/5"
                     )}
                   >
                     <td className="sticky left-0 z-10 px-3 py-2.5 border-r border-border bg-inherit">
@@ -365,25 +413,18 @@ export function ComparisonTable() {
                       const isL1 = rank === 1;
                       const totalValue = item.annualQty * item.unitPrice;
                       const overallR = vendorOverallRank.get(vIdx) || 0;
+                      const isCellHighlighted = highlightedVendorId === vendor.id || highlightedItemId === refItem.itemId;
 
                       return (
                         <td
                           key={vendor.id}
                           className={cn(
-                            "px-3 py-2.5 border-border",
-                            overallR === 1 && "bg-green-50/30"
+                            "px-3 py-2.5 border-border transition-all duration-500",
+                            overallR === 1 && "bg-green-50/30",
+                            isCellHighlighted && "bg-[#0070BB]/10 ring-1 ring-inset ring-[#0070BB]/30"
                           )}
                         >
                           <div className="space-y-1">
-                            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                              {formatInr(item.unitPrice)}/{item.uom.toLowerCase()}
-                              <PriceChange
-                                currentPrice={item.unitPrice}
-                                previousPrice={item.previousUnitPrice}
-                                showPrevious={isL1}
-                              />
-                            </div>
-
                             <div className="flex items-center gap-1.5">
                               <span
                                 className={cn(
@@ -409,24 +450,35 @@ export function ComparisonTable() {
                               </span>
                             </div>
 
-                            <div className="text-[10px] text-muted-foreground leading-tight">
-                              {item.paymentTerms}
+                            <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                              {formatInr(item.unitPrice)}/{item.uom.toLowerCase()}
+                              <PriceChange
+                                currentPrice={item.unitPrice}
+                                previousPrice={item.previousUnitPrice}
+                                showPrevious={isL1}
+                              />
                             </div>
-                            <div className="text-[10px] text-muted-foreground/70">
-                              {item.incoterms}
-                            </div>
-                            {item.certifications.length > 0 && (
-                              <div className="flex flex-wrap gap-0.5 pt-0.5">
-                                {item.certifications.map((cert) => (
-                                  <span
-                                    key={cert}
-                                    className="text-[8px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium"
-                                  >
-                                    {cert}
+
+                            <div className="flex items-center gap-1.5 mt-0.5">
+                              <span className="relative group">
+                                <span className="text-[9px] text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded hover-lift">
+                                  {item.leadTimeDays}d lead · {item.incoterms}
+                                </span>
+                                <span className="absolute bottom-full left-0 mb-1 hidden group-hover:block whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-lg z-50">
+                                  Lead: {item.leadTimeDays} days · {item.paymentTerms} · {item.incoterms}
+                                </span>
+                              </span>
+                              {item.certifications.length > 0 && (
+                                <span className="relative group">
+                                  <span className="text-[9px] bg-blue-50 text-blue-700 border border-blue-200 px-1.5 py-0.5 rounded-full font-medium hover-lift">
+                                    {item.certifications.length} cert{item.certifications.length > 1 ? "s" : ""}
                                   </span>
-                                ))}
-                              </div>
-                            )}
+                                  <span className="absolute bottom-full left-0 mb-1 hidden group-hover:block whitespace-nowrap bg-foreground text-background text-[10px] px-2 py-1 rounded shadow-lg z-50">
+                                    {item.certifications.join(", ")}
+                                  </span>
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </td>
                       );
@@ -435,8 +487,8 @@ export function ComparisonTable() {
                 );
               })}
 
-              <tr className="bg-muted/60 border-t-2 border-border font-semibold">
-                <td className="sticky left-0 z-10 bg-muted/60 px-3 py-3 border-r border-border">
+              <tr className="bg-muted/60 border-t-2 border-border font-semibold sticky bottom-0 z-20">
+                <td className="sticky left-0 z-30 bg-muted/60 px-3 py-3 border-r border-border">
                   <span className="text-xs font-bold text-foreground uppercase tracking-wider">
                     Total Value
                   </span>
@@ -487,11 +539,8 @@ export function ComparisonTable() {
         </div>
       </div>
 
-      <div className="flex items-center gap-1.5 mt-2 text-[10px] text-muted-foreground">
-        <Info className="w-3 h-3" />
-        <span>
-          All prices in INR (₹), excluding GST. Total Value = Qty/Yr × Unit Price. L1 = Lowest quoted price.
-        </span>
+      <div className="px-4 py-1 text-[10px] text-muted-foreground">
+        All prices in INR (₹), excluding GST. Total Value = Qty/Yr × Unit Price.
       </div>
 
       {quoteVendor && (

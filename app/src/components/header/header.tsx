@@ -80,7 +80,7 @@ export function Header() {
           <Button
             variant="outline"
             size="sm"
-            className="text-xs gap-1.5"
+            className="ai-cta-glow text-xs gap-1.5 border-[#0070BB]/30 text-[#0070BB] hover:bg-[#0070BB]/5"
             onClick={() => setRecOpen(true)}
           >
             <Sparkles className="w-3.5 h-3.5" />
@@ -90,7 +90,7 @@ export function Header() {
           <Button
             variant="outline"
             size="sm"
-            className="text-xs gap-1.5"
+            className="text-xs gap-1.5 font-medium"
             onClick={() => setSummaryOpen(true)}
           >
             <FileText className="w-3.5 h-3.5" />
