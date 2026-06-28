@@ -39,7 +39,7 @@ function BarChart({ data }: { data: ChartData }) {
 
   if (isHorizontal) {
     return (
-      <div className="my-2 p-3 bg-muted/30 rounded-lg border border-border">
+      <div className="my-2 p-3 bg-muted/30 rounded-lg border border-border overflow-hidden">
         <p className="text-[11px] font-semibold text-foreground mb-2">{data.title}</p>
         <div className="space-y-1.5">
           {data.labels.map((label, i) => (
@@ -81,8 +81,8 @@ function BarChart({ data }: { data: ChartData }) {
   }
 
   return (
-    <div className="my-2 p-3 bg-muted/30 rounded-lg border border-border">
-      <p className="text-[11px] font-semibold text-foreground mb-2">{data.title}</p>
+    <div className="my-2 p-3 bg-muted/30 rounded-lg border border-border overflow-hidden">
+      <p className="text-[11px] font-semibold text-foreground mb-2 break-words">{data.title}</p>
       <div className="flex items-end gap-1 h-[120px]">
         {data.labels.map((label, i) => (
           <div key={i} className="flex-1 flex flex-col items-center gap-0.5 h-full justify-end">
@@ -174,51 +174,106 @@ function renderMarkdown(text: string) {
         }
 
         const lines = segment.content.split("\n");
-        return lines.map((line, i) => {
+        const elements: React.ReactNode[] = [];
+        let i = 0;
+        while (i < lines.length) {
+          const line = lines[i];
           const key = `${sIdx}-${i}`;
+
+          if (line.trim().startsWith("|") && line.trim().endsWith("|")) {
+            const tableLines: string[] = [];
+            while (i < lines.length && lines[i].trim().startsWith("|") && lines[i].trim().endsWith("|")) {
+              tableLines.push(lines[i]);
+              i++;
+            }
+            const rows = tableLines
+              .filter(l => !l.match(/^\|[\s\-:]+\|$/))
+              .map(l => l.split("|").slice(1, -1).map(c => c.trim()));
+            if (rows.length > 0) {
+              elements.push(
+                <div key={key} className="overflow-x-auto my-2 rounded-lg border border-border">
+                  <table className="text-[11px] w-full">
+                    <thead>
+                      <tr className="bg-muted/50">
+                        {rows[0].map((cell, ci) => (
+                          <th key={ci} className="px-2 py-1.5 text-left font-semibold text-foreground whitespace-nowrap border-b border-border">
+                            {inlineBold(cell)}
+                          </th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.slice(1).map((row, ri) => (
+                        <tr key={ri} className={ri % 2 === 0 ? "bg-card" : "bg-muted/20"}>
+                          {row.map((cell, ci) => (
+                            <td key={ci} className="px-2 py-1.5 text-muted-foreground whitespace-nowrap border-b border-border/50">
+                              {inlineBold(cell)}
+                            </td>
+                          ))}
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              );
+            }
+            continue;
+          }
 
           const h2Match = line.match(/^##\s+(.+)/);
           if (h2Match) {
-            return (
+            elements.push(
               <p key={key} className="font-semibold text-sm mt-3 first:mt-0">
                 {inlineBold(h2Match[1])}
               </p>
             );
+            i++;
+            continue;
           }
 
           const h3Match = line.match(/^###\s+(.+)/);
           if (h3Match) {
-            return (
+            elements.push(
               <p key={key} className="font-semibold text-xs mt-2 first:mt-0">
                 {inlineBold(h3Match[1])}
               </p>
             );
+            i++;
+            continue;
           }
 
           const headingMatch = line.match(/^\*\*(.+?)\*\*$/);
           if (headingMatch) {
-            return (
+            elements.push(
               <p key={key} className="font-semibold mt-2 first:mt-0">
                 {headingMatch[1]}
               </p>
             );
+            i++;
+            continue;
           }
 
           const bulletMatch = line.match(/^\s*[\*\-]\s+(.+)/);
           if (bulletMatch) {
-            return (
+            elements.push(
               <li key={key} className="ml-3 list-disc text-xs">
                 {inlineBold(bulletMatch[1])}
               </li>
             );
+            i++;
+            continue;
           }
 
-          if (line.trim() === "") {
-            return <br key={key} />;
+          if (line.trim() === "" || line.trim() === "---") {
+            elements.push(<br key={key} />);
+            i++;
+            continue;
           }
 
-          return <p key={key}>{inlineBold(line)}</p>;
-        });
+          elements.push(<p key={key}>{inlineBold(line)}</p>);
+          i++;
+        }
+        return elements;
       })}
     </div>
   );
@@ -245,7 +300,7 @@ export function ChatMessage({ message }: { message: ChatMessageType }) {
       </div>
       <div
         className={cn(
-          "text-sm leading-relaxed flex-1 min-w-0",
+          "text-sm leading-relaxed flex-1 min-w-0 overflow-hidden",
           isAssistant ? "text-foreground" : "text-foreground font-medium"
         )}
       >

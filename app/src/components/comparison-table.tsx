@@ -355,7 +355,7 @@ export function ComparisonTable() {
           <table className="w-full text-sm">
             <thead className="sticky top-0 z-20">
               <tr className="bg-muted/90 backdrop-blur-sm">
-                <th className="sticky left-0 z-30 bg-muted/90 backdrop-blur-sm text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-r border-border min-w-[200px] max-w-[240px]">
+                <th className="sticky left-0 z-30 bg-muted text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-r border-border min-w-[200px] max-w-[240px]">
                   Item Name / Description
                 </th>
                 <th className="text-left px-3 py-2.5 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider border-b border-r border-border w-[70px] bg-muted/90 backdrop-blur-sm">
@@ -449,7 +449,10 @@ export function ComparisonTable() {
                       highlightedItemId === refItem.itemId && "bg-[#0070BB]/5"
                     )}
                   >
-                    <td className="sticky left-0 z-10 px-3 py-2.5 border-r border-border bg-inherit min-w-[200px] max-w-[240px]">
+                    <td className={cn(
+                      "sticky left-0 z-10 px-3 py-2.5 border-r border-border min-w-[200px] max-w-[240px]",
+                      rowIdx % 2 === 0 ? "bg-card" : "bg-muted"
+                    )}>
                       <div className="text-sm font-medium text-foreground truncate">
                         {refItem.itemName}
                       </div>
@@ -566,14 +569,14 @@ export function ComparisonTable() {
                 );
               })}
 
-              <tr className="bg-muted/60 border-t-2 border-border font-semibold sticky bottom-0 z-20">
-                <td className="sticky left-0 z-30 bg-muted/60 px-3 py-3 border-r border-border min-w-[200px] max-w-[240px]">
+              <tr className="bg-muted border-t-2 border-border font-semibold sticky bottom-0 z-20">
+                <td className="sticky left-0 z-30 bg-muted px-3 py-3 border-r border-border min-w-[200px] max-w-[240px]">
                   <span className="text-xs font-bold text-foreground uppercase tracking-wider">
                     Total Value
                   </span>
                 </td>
-                <td className="px-3 py-3 border-r border-border bg-muted/60" />
-                <td className="px-3 py-3 border-r border-border bg-muted/60" />
+                <td className="px-3 py-3 border-r border-border bg-muted" />
+                <td className="px-3 py-3 border-r border-border bg-muted" />
                 {vendors.map((vendor, vIdx) => {
 
                   const total = vendorTotals[vIdx];
