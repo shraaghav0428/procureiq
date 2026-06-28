@@ -173,6 +173,13 @@ export function ChatPanel() {
       setIsLoadingChat(true);
 
       try {
+        const history = useAppStore.getState().chatMessages
+          .slice(0, -2)
+          .filter(m => m.content)
+          .map(m => ({ role: m.role, content: m.content }));
+
+        const rec = useAppStore.getState().recommendation;
+
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -180,6 +187,8 @@ export function ChatPanel() {
             eventId: selectedEvent.id,
             persona,
             message: text.trim(),
+            recommendation: rec ? { vendorName: rec.vendorName, answer: rec.answer, evidence: rec.evidence } : null,
+            chatHistory: history.length > 0 ? history : undefined,
           }),
         });
 
@@ -227,7 +236,7 @@ export function ChatPanel() {
   const hasMessages = chatMessages.length > 0;
 
   return (
-    <aside className="w-[400px] shrink-0 border-l border-border bg-card flex flex-col overflow-hidden">
+    <aside className="w-[380px] shrink-0 border-l border-border bg-card flex flex-col overflow-hidden">
       {/* Header */}
       <div className="shrink-0 px-4 py-3 border-b border-border flex items-center justify-between bg-gradient-to-r from-[#0070BB]/5 to-transparent">
         <div className="flex items-center gap-2">

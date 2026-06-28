@@ -33,15 +33,19 @@ export async function generateResponse(
 
 export async function* generateStreamingResponse(
   systemPrompt: string,
-  userPrompt: string
+  messages: string | { role: "user" | "assistant"; content: string }[]
 ): AsyncGenerator<string> {
   const anthropic = getClient();
+
+  const msgs = typeof messages === "string"
+    ? [{ role: "user" as const, content: messages }]
+    : messages;
 
   const stream = anthropic.messages.stream({
     model: MODEL,
     max_tokens: 2048,
     system: systemPrompt,
-    messages: [{ role: "user", content: userPrompt }],
+    messages: msgs,
   });
 
   for await (const event of stream) {

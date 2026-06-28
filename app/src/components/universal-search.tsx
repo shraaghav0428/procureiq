@@ -76,6 +76,7 @@ export function UniversalSearch() {
     persona,
     isLoadingChat,
     isChatPanelOpen,
+    recommendation,
     addChatMessage,
     setIsLoadingChat,
     setChatPanelOpen,
@@ -111,6 +112,13 @@ export function UniversalSearch() {
       setIsLoadingChat(true);
 
       try {
+        const history = useAppStore.getState().chatMessages
+          .slice(0, -2)
+          .filter(m => m.content)
+          .map(m => ({ role: m.role, content: m.content }));
+
+        const rec = useAppStore.getState().recommendation;
+
         const response = await fetch("/api/chat", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -118,6 +126,8 @@ export function UniversalSearch() {
             eventId: selectedEvent.id,
             persona,
             message: text.trim(),
+            recommendation: rec ? { vendorName: rec.vendorName, answer: rec.answer, evidence: rec.evidence } : null,
+            chatHistory: history.length > 0 ? history : undefined,
           }),
         });
 
