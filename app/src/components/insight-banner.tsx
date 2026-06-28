@@ -114,18 +114,20 @@ function generateInsightText(insights: VendorInsight[]): string {
   const savingsPct = ((savingsVsL2 / l2.total) * 100).toFixed(1);
 
   if (l1.id === bestRated.id && l1.complianceRate === 100 && l1.riskLevel === "Low") {
-    return `${l1.name} is the clear winner — lowest cost at ${formatLakhs(l1.total)}, highest rating (${l1.avgRating.toFixed(1)}★), 100% compliance, and low risk. ${savingsPct}% savings vs L2 ${l2.name}.`;
+    return `${l1.name} leads at ${formatLakhs(l1.total)} — highest rated (${l1.avgRating.toFixed(1)}★), fully compliant, low risk. Saves ${formatLakhs(savingsVsL2)} (${savingsPct}%) vs L2 ${l2.name}.`;
   }
 
   if (l1.riskLevel === "High" || l1.complianceRate < 60) {
-    return `${l1.name} is L1 at ${formatLakhs(l1.total)} but flagged ${l1.riskLevel.toLowerCase()} risk with ${l1.complianceRate}% compliance. ${bestRated.name} costs ${((bestRated.total - l1.total) / l1.total * 100).toFixed(0)}% more but offers ${bestRated.avgRating.toFixed(1)}★ rating${bestRated.riskLevel === "Low" ? " and low risk" : ""}. Weigh cost savings (${savingsPct}%) against vendor reliability.`;
+    const premiumAmt = bestRated.total - l1.total;
+    return `Caution: L1 ${l1.name} (${formatLakhs(l1.total)}) is ${l1.riskLevel.toLowerCase()} risk, ${l1.complianceRate}% compliant. Consider ${bestRated.name} (${bestRated.avgRating.toFixed(1)}★, ${bestRated.riskLevel.toLowerCase()} risk) at ${formatLakhs(premiumAmt)} premium for better reliability.`;
   }
 
   if (l1.id !== bestRated.id) {
-    return `${l1.name} is L1 at ${formatLakhs(l1.total)} (${l1.avgRating.toFixed(1)}★, ${l1.riskLevel.toLowerCase()} risk). ${bestRated.name} costs ${((bestRated.total - l1.total) / l1.total * 100).toFixed(0)}% more but offers ${bestRated.avgRating.toFixed(1)}★ rating${bestRated.complianceRate === 100 ? " with full compliance" : ""}. Weigh cost savings (${savingsPct}%) against quality.`;
+    const premiumAmt = bestRated.total - l1.total;
+    return `${l1.name} is L1 at ${formatLakhs(l1.total)} (${l1.avgRating.toFixed(1)}★, ${l1.riskLevel.toLowerCase()} risk). Best-rated ${bestRated.name} (${bestRated.avgRating.toFixed(1)}★) costs ${formatLakhs(premiumAmt)} more. Saves ${formatLakhs(savingsVsL2)} vs L2.`;
   }
 
-  return `${l1.name} leads at ${formatLakhs(l1.total)} with ${l1.avgRating.toFixed(1)}★ rating and ${l1.riskLevel.toLowerCase()} risk. ${savingsPct}% savings vs next-best ${l2.name}. Review compliance and delivery terms before awarding.`;
+  return `${l1.name} leads at ${formatLakhs(l1.total)} — ${l1.avgRating.toFixed(1)}★, ${l1.riskLevel.toLowerCase()} risk. Saves ${formatLakhs(savingsVsL2)} (${savingsPct}%) vs L2 ${l2.name}. Review compliance and terms before awarding.`;
 }
 
 function VendorDetailPopup({ vendor, onClose }: { vendor: VendorInsight; onClose: () => void }) {

@@ -127,6 +127,13 @@ RULES:
 - Flag risks proactively when they affect the question being asked.
 - Use the pre-computed L-rankings above when answering about L1/L2/L3. Do NOT assume vendor order in the data equals L-ranking.
 
+NO CHAIN-OF-THOUGHT — CRITICAL:
+- NEVER show intermediate calculations, working steps, arithmetic, or reasoning process in your response.
+- NEVER write things like "Let me calculate...", "First, let's compute...", "Step 1...", "Calculation:", or show multiplication/addition steps.
+- Go straight to the final answer with the concrete numbers. The user wants results, not your working.
+- For comparisons, use a table or chart — never narrate arithmetic like "X × Y = Z, and A × B = C, so..."
+- If comparing costs across vendors/items, present the final values in a table or chart, not a step-by-step breakdown.
+
 GUARDRAILS:
 1. DATASET GROUNDING: Answer only from the procurement dataset above. Never fabricate supplier capabilities, certifications, financial information, or commercial terms.
 2. NO HALLUCINATIONS: Never guess supplier reputation, market prices, delivery capability, quality, financial stability, warranty, or certifications unless explicitly present in the dataset.
@@ -155,10 +162,12 @@ Rules for charts:
 - If the question involves comparing 2+ vendors or 2+ items on any metric, INCLUDE A CHART
 
 FORMATTING:
-- Use **bold** for emphasis and headings.
+- Use ## for section headings (e.g., ## Cost Comparison, ## Recommendation).
+- Use **bold** for emphasis within text.
 - Use bullet points (- ) for lists.
 - Do NOT use code blocks, markdown code fences, or any \`\`\` markers.
-- Keep responses plain text with bold and bullets only (except for [CHART] blocks).`;
+- Do NOT use # (h1) headings — only ## (h2) and ### (h3).
+- Keep responses structured with headings, bullets, and charts. Never write long unstructured paragraphs.`;
 }
 
 export function getRecommendationPrompt(

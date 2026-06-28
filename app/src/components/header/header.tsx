@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useAppStore } from "@/stores/app-store";
-import { WorkspaceToggle } from "./workspace-toggle";
 import { EventSelector } from "./event-selector";
 import { ExportButton } from "./export-button";
 import { BrainCircuit, Sparkles, FileText, X } from "lucide-react";
@@ -59,8 +58,8 @@ export function Header() {
 
   return (
     <>
-      <header className="h-14 border-b border-border bg-card px-6 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-5">
+      <header className="h-14 border-b border-border bg-card px-6 flex items-center shrink-0">
+        <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-lg bg-[#0070BB] flex items-center justify-center">
               <BrainCircuit className="w-4 h-4 text-white" />
@@ -69,14 +68,17 @@ export function Header() {
               ProcureIQ
             </span>
           </div>
-
           <div className="h-5 w-px bg-border" />
-          <EventSelector />
-          <div className="h-5 w-px bg-border" />
-          <WorkspaceToggle />
+          <span className="text-sm text-muted-foreground">
+            Hello, <span className="text-foreground font-medium">Rajesh</span>
+          </span>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex-1 flex justify-center">
+          <EventSelector />
+        </div>
+
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="outline"
             size="sm"

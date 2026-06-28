@@ -177,6 +177,24 @@ function renderMarkdown(text: string) {
         return lines.map((line, i) => {
           const key = `${sIdx}-${i}`;
 
+          const h2Match = line.match(/^##\s+(.+)/);
+          if (h2Match) {
+            return (
+              <p key={key} className="font-semibold text-sm mt-3 first:mt-0">
+                {inlineBold(h2Match[1])}
+              </p>
+            );
+          }
+
+          const h3Match = line.match(/^###\s+(.+)/);
+          if (h3Match) {
+            return (
+              <p key={key} className="font-semibold text-xs mt-2 first:mt-0">
+                {inlineBold(h3Match[1])}
+              </p>
+            );
+          }
+
           const headingMatch = line.match(/^\*\*(.+?)\*\*$/);
           if (headingMatch) {
             return (
