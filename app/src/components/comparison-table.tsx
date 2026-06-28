@@ -221,24 +221,16 @@ function QuoteDetailOverlay({
 }
 
 export function ComparisonTable() {
-  const { selectedEvent, highlightedVendorId, highlightedItemId } = useAppStore();
+  const {
+    selectedEvent, highlightedVendorId, highlightedItemId,
+    filterNonCompliant, filterSavings, filterPriceRose, filterL1L2,
+    setFilterNonCompliant, setFilterSavings, setFilterPriceRose, setFilterL1L2, resetFilters,
+  } = useAppStore();
   const vendors = selectedEvent.vendors;
   const lineItemCount = vendors[0].lineItems.length;
   const [quoteVendor, setQuoteVendor] = useState<Vendor | null>(null);
 
-  const [filterNonCompliant, setFilterNonCompliant] = useState(false);
-  const [filterSavings, setFilterSavings] = useState(false);
-  const [filterPriceRose, setFilterPriceRose] = useState(false);
-  const [filterL1L2, setFilterL1L2] = useState(false);
-
   const hasActiveFilter = filterNonCompliant || filterSavings || filterPriceRose || filterL1L2;
-
-  const resetFilters = () => {
-    setFilterNonCompliant(false);
-    setFilterSavings(false);
-    setFilterPriceRose(false);
-    setFilterL1L2(false);
-  };
 
   const vendorTotals = vendors.map((v) =>
     v.lineItems.reduce((sum, item) => sum + item.annualQty * item.unitPrice, 0)
@@ -291,6 +283,7 @@ export function ComparisonTable() {
           <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 mr-1">Filters</span>
           <button
             onClick={() => setFilterNonCompliant(!filterNonCompliant)}
+
             className={cn(
               "px-2 py-0.5 rounded-full border transition-all text-[10px] font-medium",
               filterNonCompliant
@@ -301,7 +294,7 @@ export function ComparisonTable() {
             Non-compliant vendors
           </button>
           <button
-            onClick={() => { setFilterSavings(!filterSavings); if (!filterSavings) setFilterPriceRose(false); }}
+            onClick={() => setFilterSavings(!filterSavings)}
             className={cn(
               "px-2 py-0.5 rounded-full border transition-all text-[10px] font-medium flex items-center gap-0.5",
               filterSavings
@@ -313,7 +306,7 @@ export function ComparisonTable() {
             Savings
           </button>
           <button
-            onClick={() => { setFilterPriceRose(!filterPriceRose); if (!filterPriceRose) setFilterSavings(false); }}
+            onClick={() => setFilterPriceRose(!filterPriceRose)}
             className={cn(
               "px-2 py-0.5 rounded-full border transition-all text-[10px] font-medium flex items-center gap-0.5",
               filterPriceRose

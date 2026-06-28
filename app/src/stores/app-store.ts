@@ -19,6 +19,11 @@ interface AppState {
   isLoadingChat: boolean;
   highlightedVendorId: string | null;
   highlightedItemId: string | null;
+  isChatPanelOpen: boolean;
+  filterNonCompliant: boolean;
+  filterSavings: boolean;
+  filterPriceRose: boolean;
+  filterL1L2: boolean;
 
   setPersona: (persona: Persona) => void;
   setSelectedEvent: (eventId: string) => void;
@@ -32,6 +37,12 @@ interface AppState {
   setIsLoadingChat: (loading: boolean) => void;
   highlightVendor: (vendorId: string | null) => void;
   highlightItem: (itemId: string | null) => void;
+  setChatPanelOpen: (open: boolean) => void;
+  setFilterNonCompliant: (on: boolean) => void;
+  setFilterSavings: (on: boolean) => void;
+  setFilterPriceRose: (on: boolean) => void;
+  setFilterL1L2: (on: boolean) => void;
+  resetFilters: () => void;
 }
 
 export const useAppStore = create<AppState>((set) => ({
@@ -45,6 +56,11 @@ export const useAppStore = create<AppState>((set) => ({
   isLoadingChat: false,
   highlightedVendorId: null,
   highlightedItemId: null,
+  isChatPanelOpen: false,
+  filterNonCompliant: false,
+  filterSavings: false,
+  filterPriceRose: false,
+  filterL1L2: false,
 
   setPersona: (persona) => set({ persona }),
 
@@ -56,6 +72,10 @@ export const useAppStore = create<AppState>((set) => ({
         chatMessages: [],
         recommendation: null,
         summary: null,
+        filterNonCompliant: false,
+        filterSavings: false,
+        filterPriceRose: false,
+        filterL1L2: false,
       });
     }
   },
@@ -90,4 +110,10 @@ export const useAppStore = create<AppState>((set) => ({
     set({ highlightedItemId: itemId });
     if (itemId) setTimeout(() => set({ highlightedItemId: null }), 3000);
   },
+  setChatPanelOpen: (open) => set({ isChatPanelOpen: open }),
+  setFilterNonCompliant: (on) => set({ filterNonCompliant: on }),
+  setFilterSavings: (on) => set((state) => ({ filterSavings: on, filterPriceRose: on ? false : state.filterPriceRose })),
+  setFilterPriceRose: (on) => set((state) => ({ filterPriceRose: on, filterSavings: on ? false : state.filterSavings })),
+  setFilterL1L2: (on) => set({ filterL1L2: on }),
+  resetFilters: () => set({ filterNonCompliant: false, filterSavings: false, filterPriceRose: false, filterL1L2: false }),
 }));
