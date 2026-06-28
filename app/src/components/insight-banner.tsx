@@ -139,7 +139,6 @@ function formatInrAmount(amount: number): string {
 
 function generateInsightText(insights: VendorInsight[], event: SourcingEvent): string {
   const l1 = insights[0];
-  const bestRated = [...insights].sort((a, b) => b.avgRating - a.avgRating)[0];
   const l2 = insights[1];
   const savings = computeSavingsVsLastBuy(event);
 
@@ -147,23 +146,18 @@ function generateInsightText(insights: VendorInsight[], event: SourcingEvent): s
     ? `${formatInrAmount(savings.totalSavings)} potential savings vs last buy across ${savings.itemCount} of ${savings.totalItems} items. `
     : "";
 
-  if (l1.id === bestRated.id && l1.complianceRate === 100 && l1.riskLevel === "Low") {
-    return `${savingsPrefix}${l1.name} leads at ${formatLakhs(l1.total)} — highest rated (${l1.avgRating.toFixed(1)}★), fully compliant, low risk.`;
-  }
-
-  if (l1.riskLevel === "High" || l1.complianceRate < 60) {
-    const premiumAmt = bestRated.total - l1.total;
-    return `${savingsPrefix}Caution: L1 ${l1.name} (${formatLakhs(l1.total)}) is ${l1.riskLevel.toLowerCase()} risk, ${l1.complianceRate}% compliant. Consider ${bestRated.name} (${bestRated.avgRating.toFixed(1)}★, ${bestRated.riskLevel.toLowerCase()} risk) at ${formatLakhs(premiumAmt)} premium.`;
-  }
-
-  if (l1.id !== bestRated.id) {
-    const premiumAmt = bestRated.total - l1.total;
-    return `${savingsPrefix}${l1.name} is L1 at ${formatLakhs(l1.total)} (${l1.avgRating.toFixed(1)}★, ${l1.riskLevel.toLowerCase()} risk). Best-rated ${bestRated.name} (${bestRated.avgRating.toFixed(1)}★) costs ${formatLakhs(premiumAmt)} more.`;
-  }
-
   const savingsVsL2 = l2.total - l1.total;
   const savingsPct = ((savingsVsL2 / l2.total) * 100).toFixed(1);
-  return `${savingsPrefix}${l1.name} leads at ${formatLakhs(l1.total)} — ${l1.avgRating.toFixed(1)}★, ${l1.riskLevel.toLowerCase()} risk. Saves ${formatLakhs(savingsVsL2)} (${savingsPct}%) vs L2 ${l2.name}.`;
+
+  if (l1.riskLevel === "High" || l1.complianceRate < 60) {
+    return `${savingsPrefix}L1 ${l1.name} at ${formatLakhs(l1.total)} is ${l1.riskLevel.toLowerCase()} risk with ${l1.complianceRate}% compliance — review alternatives before awarding. ${savingsPct}% spread vs L2.`;
+  }
+
+  if (l1.complianceRate === 100 && l1.riskLevel === "Low") {
+    return `${savingsPrefix}L1 ${l1.name} at ${formatLakhs(l1.total)} — fully compliant, low risk. Saves ${formatLakhs(savingsVsL2)} (${savingsPct}%) vs L2 ${l2.name}.`;
+  }
+
+  return `${savingsPrefix}L1 ${l1.name} at ${formatLakhs(l1.total)} (${l1.complianceRate}% compliant, ${l1.riskLevel.toLowerCase()} risk). ${savingsPct}% spread vs L2 ${l2.name}. Review compliance and terms before awarding.`;
 }
 
 function VendorDetailPopup({ vendor, onClose }: { vendor: VendorInsight; onClose: () => void }) {

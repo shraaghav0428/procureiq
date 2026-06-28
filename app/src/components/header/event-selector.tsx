@@ -27,7 +27,7 @@ export function EventSelector() {
       <div className="relative">
         <button
           onClick={() => setOpen(!open)}
-          className="flex items-center gap-2 h-8 px-3 rounded-lg border border-input bg-card text-sm hover:bg-muted transition-colors min-w-[280px]"
+          className="flex items-center gap-2 h-8 px-3 rounded-lg border border-input bg-card text-sm hover:bg-muted transition-colors min-w-[380px]"
         >
           <span className="flex-1 text-left truncate">{selectedEvent.name}</span>
           <ChevronDown className={cn("w-4 h-4 text-muted-foreground transition-transform", open && "rotate-180")} />

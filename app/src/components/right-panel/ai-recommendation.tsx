@@ -22,9 +22,14 @@ export function AIRecommendation() {
   } = useAppStore();
 
   const retryCountRef = useRef(0);
+  const abortRef = useRef<AbortController | null>(null);
   const maxRetries = 5;
 
   const fetchRecommendation = useCallback(async () => {
+    if (abortRef.current) abortRef.current.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setIsLoadingRecommendation(true);
     setRecommendation(null);
     let willRetry = false;
@@ -36,17 +41,22 @@ export function AIRecommendation() {
           eventId: selectedEvent.id,
           persona,
         }),
+        signal: controller.signal,
       });
+      if (controller.signal.aborted) return;
       if (response.ok) {
         const data = await response.json();
-        setRecommendation(data);
-        retryCountRef.current = 0;
+        if (!controller.signal.aborted) {
+          setRecommendation(data);
+          retryCountRef.current = 0;
+        }
       } else if (response.status === 429 && retryCountRef.current < maxRetries) {
         retryCountRef.current += 1;
         willRetry = true;
         setTimeout(fetchRecommendation, retryCountRef.current * 5000);
       }
     } catch (error) {
+      if (controller.signal.aborted) return;
       console.error("Recommendation error:", error);
       if (retryCountRef.current < maxRetries) {
         retryCountRef.current += 1;
@@ -54,14 +64,15 @@ export function AIRecommendation() {
         setTimeout(fetchRecommendation, retryCountRef.current * 5000);
       }
     } finally {
-      if (!willRetry) setIsLoadingRecommendation(false);
+      if (!controller.signal.aborted && !willRetry) setIsLoadingRecommendation(false);
     }
-  }, [selectedEvent.id, persona]);
+  }, [selectedEvent.id, persona, setIsLoadingRecommendation, setRecommendation]);
 
   useEffect(() => {
     retryCountRef.current = 0;
     fetchRecommendation();
-  }, [selectedEvent.id, persona, fetchRecommendation]);
+    return () => { if (abortRef.current) abortRef.current.abort(); };
+  }, [fetchRecommendation]);
 
   return (
     <div>

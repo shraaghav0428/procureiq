@@ -183,14 +183,22 @@ export function getRecommendationPrompt(
 
 ${focus}
 
+IMPORTANT: Your recommendation must be backed by concrete data, not vague claims. Every evidence point must include specific numbers:
+- Cite exact total values in INR (e.g., "Total value of ₹1,59,34,400 — 12% lower than the next best vendor")
+- Cite compliance counts (e.g., "Technically compliant on 14 of 15 line items")
+- Cite lead times (e.g., "Average lead time of 10 days vs industry average of 14 days")
+- Cite L-ranking wins (e.g., "L1 on 8 of 15 items, L2 on 5 items")
+- Cite price movement vs last buy (e.g., "Prices dropped on 12 items vs previous purchase")
+- Do NOT use star ratings as evidence — they are not a concrete metric for procurement decisions
+
 Respond in this exact JSON format:
 {
   "vendorId": "the vendor id",
   "vendorName": "the vendor name",
-  "answer": "A concise 2-3 sentence summary of why this vendor is recommended",
-  "evidence": ["evidence point 1 with specific data in INR", "evidence point 2", "evidence point 3", "evidence point 4"],
-  "recommendation": "A clear 1-2 sentence actionable recommendation",
-  "tradeoffs": ["tradeoff 1", "tradeoff 2", "tradeoff 3"],
+  "answer": "A concise 2-3 sentence summary with specific INR values and data points",
+  "evidence": ["evidence with exact INR values and counts", "evidence with exact INR values and counts", "evidence with exact INR values and counts", "evidence with exact INR values and counts"],
+  "recommendation": "A clear 1-2 sentence actionable recommendation with the key number",
+  "tradeoffs": ["tradeoff with specific data", "tradeoff with specific data", "tradeoff with specific data"],
   "confidence": 0.85
 }
 
