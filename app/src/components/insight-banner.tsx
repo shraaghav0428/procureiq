@@ -105,29 +105,65 @@ function computeInsights(event: SourcingEvent) {
   return insights;
 }
 
-function generateInsightText(insights: VendorInsight[]): string {
+function computeSavingsVsLastBuy(event: SourcingEvent): { totalSavings: number; itemCount: number; totalItems: number } {
+  const vendors = event.vendors;
+  const lineItemCount = vendors[0].lineItems.length;
+
+  const vendorTotals = vendors.map((v) => ({
+    vendor: v,
+    total: v.lineItems.reduce((sum, item) => sum + item.annualQty * item.unitPrice, 0),
+  }));
+  vendorTotals.sort((a, b) => a.total - b.total);
+  const l1Vendor = vendorTotals[0].vendor;
+
+  let totalSavings = 0;
+  let itemCount = 0;
+
+  for (const item of l1Vendor.lineItems) {
+    const diff = (item.previousUnitPrice - item.unitPrice) * item.annualQty;
+    if (diff > 0) {
+      totalSavings += diff;
+      itemCount++;
+    }
+  }
+
+  return { totalSavings, itemCount, totalItems: lineItemCount };
+}
+
+function formatInrAmount(amount: number): string {
+  const inr = amount * INR_RATE;
+  if (inr >= 10000000) return `₹${(inr / 10000000).toFixed(1)}Cr`;
+  if (inr >= 100000) return `₹${(inr / 100000).toFixed(1)}L`;
+  return `₹${Math.round(inr).toLocaleString("en-IN")}`;
+}
+
+function generateInsightText(insights: VendorInsight[], event: SourcingEvent): string {
   const l1 = insights[0];
   const bestRated = [...insights].sort((a, b) => b.avgRating - a.avgRating)[0];
   const l2 = insights[1];
+  const savings = computeSavingsVsLastBuy(event);
 
-  const savingsVsL2 = l2.total - l1.total;
-  const savingsPct = ((savingsVsL2 / l2.total) * 100).toFixed(1);
+  const savingsPrefix = savings.totalSavings > 0
+    ? `${formatInrAmount(savings.totalSavings)} potential savings vs last buy across ${savings.itemCount} of ${savings.totalItems} items. `
+    : "";
 
   if (l1.id === bestRated.id && l1.complianceRate === 100 && l1.riskLevel === "Low") {
-    return `${l1.name} leads at ${formatLakhs(l1.total)} — highest rated (${l1.avgRating.toFixed(1)}★), fully compliant, low risk. Saves ${formatLakhs(savingsVsL2)} (${savingsPct}%) vs L2 ${l2.name}.`;
+    return `${savingsPrefix}${l1.name} leads at ${formatLakhs(l1.total)} — highest rated (${l1.avgRating.toFixed(1)}★), fully compliant, low risk.`;
   }
 
   if (l1.riskLevel === "High" || l1.complianceRate < 60) {
     const premiumAmt = bestRated.total - l1.total;
-    return `Caution: L1 ${l1.name} (${formatLakhs(l1.total)}) is ${l1.riskLevel.toLowerCase()} risk, ${l1.complianceRate}% compliant. Consider ${bestRated.name} (${bestRated.avgRating.toFixed(1)}★, ${bestRated.riskLevel.toLowerCase()} risk) at ${formatLakhs(premiumAmt)} premium for better reliability.`;
+    return `${savingsPrefix}Caution: L1 ${l1.name} (${formatLakhs(l1.total)}) is ${l1.riskLevel.toLowerCase()} risk, ${l1.complianceRate}% compliant. Consider ${bestRated.name} (${bestRated.avgRating.toFixed(1)}★, ${bestRated.riskLevel.toLowerCase()} risk) at ${formatLakhs(premiumAmt)} premium.`;
   }
 
   if (l1.id !== bestRated.id) {
     const premiumAmt = bestRated.total - l1.total;
-    return `${l1.name} is L1 at ${formatLakhs(l1.total)} (${l1.avgRating.toFixed(1)}★, ${l1.riskLevel.toLowerCase()} risk). Best-rated ${bestRated.name} (${bestRated.avgRating.toFixed(1)}★) costs ${formatLakhs(premiumAmt)} more. Saves ${formatLakhs(savingsVsL2)} vs L2.`;
+    return `${savingsPrefix}${l1.name} is L1 at ${formatLakhs(l1.total)} (${l1.avgRating.toFixed(1)}★, ${l1.riskLevel.toLowerCase()} risk). Best-rated ${bestRated.name} (${bestRated.avgRating.toFixed(1)}★) costs ${formatLakhs(premiumAmt)} more.`;
   }
 
-  return `${l1.name} leads at ${formatLakhs(l1.total)} — ${l1.avgRating.toFixed(1)}★, ${l1.riskLevel.toLowerCase()} risk. Saves ${formatLakhs(savingsVsL2)} (${savingsPct}%) vs L2 ${l2.name}. Review compliance and terms before awarding.`;
+  const savingsVsL2 = l2.total - l1.total;
+  const savingsPct = ((savingsVsL2 / l2.total) * 100).toFixed(1);
+  return `${savingsPrefix}${l1.name} leads at ${formatLakhs(l1.total)} — ${l1.avgRating.toFixed(1)}★, ${l1.riskLevel.toLowerCase()} risk. Saves ${formatLakhs(savingsVsL2)} (${savingsPct}%) vs L2 ${l2.name}.`;
 }
 
 function VendorDetailPopup({ vendor, onClose }: { vendor: VendorInsight; onClose: () => void }) {
@@ -246,7 +282,7 @@ function VendorDetailPopup({ vendor, onClose }: { vendor: VendorInsight; onClose
 export function InsightBanner() {
   const { selectedEvent } = useAppStore();
   const insights = computeInsights(selectedEvent);
-  const insightText = generateInsightText(insights);
+  const insightText = generateInsightText(insights, selectedEvent);
   const [popupVendor, setPopupVendor] = useState<VendorInsight | null>(null);
 
   return (

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useAppStore } from "@/stores/app-store";
 import { cn } from "@/lib/utils";
-import { X, Download, FileText, TrendingUp, TrendingDown } from "lucide-react";
+import { X, Download, FileText, TrendingUp, TrendingDown, RotateCcw } from "lucide-react";
 import { Vendor } from "@/types";
 
 const INR_RATE = 83;
@@ -226,6 +226,20 @@ export function ComparisonTable() {
   const lineItemCount = vendors[0].lineItems.length;
   const [quoteVendor, setQuoteVendor] = useState<Vendor | null>(null);
 
+  const [filterNonCompliant, setFilterNonCompliant] = useState(false);
+  const [filterSavings, setFilterSavings] = useState(false);
+  const [filterPriceRose, setFilterPriceRose] = useState(false);
+  const [filterL1L2, setFilterL1L2] = useState(false);
+
+  const hasActiveFilter = filterNonCompliant || filterSavings || filterPriceRose || filterL1L2;
+
+  const resetFilters = () => {
+    setFilterNonCompliant(false);
+    setFilterSavings(false);
+    setFilterPriceRose(false);
+    setFilterL1L2(false);
+  };
+
   const vendorTotals = vendors.map((v) =>
     v.lineItems.reduce((sum, item) => sum + item.annualQty * item.unitPrice, 0)
   );
@@ -238,6 +252,7 @@ export function ComparisonTable() {
   const vendorOverallRank = new Map(
     overallRanks.map((item) => [item.idx, item.rank])
   );
+
 
   return (
     <div className="flex flex-col gap-3 h-full min-h-0">
@@ -272,21 +287,72 @@ export function ComparisonTable() {
           </div>
         </div>
 
-        <div className="flex items-center gap-3 py-1.5 px-3 rounded-md bg-muted/30 border border-border/50 text-[10px] text-muted-foreground flex-wrap">
-          <span className="flex items-center gap-1">
-            <span className="inline-flex items-center gap-0.5 text-green-600 font-semibold">
-              <TrendingUp className="w-2.5 h-2.5" />
-            </span>
-            Savings vs last buy
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="inline-flex items-center gap-0.5 text-red-600 font-semibold">
-              <TrendingDown className="w-2.5 h-2.5" />
-            </span>
-            Price rose vs last buy
-          </span>
-          <span className="h-3 w-px bg-border" />
-          <span className="text-muted-foreground/70">Hover badges for details</span>
+        <div className="flex items-center gap-1.5 py-1.5 px-3 rounded-md bg-muted/30 border border-border/50 text-[10px] text-muted-foreground flex-wrap">
+          <span className="text-[9px] font-semibold uppercase tracking-wider text-muted-foreground/70 mr-1">Filters</span>
+          <button
+            onClick={() => setFilterNonCompliant(!filterNonCompliant)}
+            className={cn(
+              "px-2 py-0.5 rounded-full border transition-all text-[10px] font-medium",
+              filterNonCompliant
+                ? "bg-amber-100 text-amber-800 border-amber-300"
+                : "bg-card text-muted-foreground border-border hover:border-amber-300 hover:text-amber-700"
+            )}
+          >
+            Non-compliant vendors
+          </button>
+          <button
+            onClick={() => { setFilterSavings(!filterSavings); if (!filterSavings) setFilterPriceRose(false); }}
+            className={cn(
+              "px-2 py-0.5 rounded-full border transition-all text-[10px] font-medium flex items-center gap-0.5",
+              filterSavings
+                ? "bg-green-100 text-green-800 border-green-300"
+                : "bg-card text-muted-foreground border-border hover:border-green-300 hover:text-green-700"
+            )}
+          >
+            <TrendingUp className="w-2.5 h-2.5" />
+            Savings
+          </button>
+          <button
+            onClick={() => { setFilterPriceRose(!filterPriceRose); if (!filterPriceRose) setFilterSavings(false); }}
+            className={cn(
+              "px-2 py-0.5 rounded-full border transition-all text-[10px] font-medium flex items-center gap-0.5",
+              filterPriceRose
+                ? "bg-red-100 text-red-800 border-red-300"
+                : "bg-card text-muted-foreground border-border hover:border-red-300 hover:text-red-700"
+            )}
+          >
+            <TrendingDown className="w-2.5 h-2.5" />
+            Price rose
+          </button>
+          <button
+            onClick={() => setFilterL1L2(!filterL1L2)}
+            className={cn(
+              "px-2 py-0.5 rounded-full border transition-all text-[10px] font-medium",
+              filterL1L2
+                ? "bg-blue-100 text-blue-800 border-blue-300"
+                : "bg-card text-muted-foreground border-border hover:border-blue-300 hover:text-blue-700"
+            )}
+          >
+            L1 & L2 only
+          </button>
+          {hasActiveFilter && (
+            <>
+              <span className="h-3 w-px bg-border" />
+              <button
+                onClick={resetFilters}
+                className="px-2 py-0.5 rounded-full border border-border text-[10px] font-medium text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-all flex items-center gap-0.5"
+              >
+                <RotateCcw className="w-2.5 h-2.5" />
+                Reset
+              </button>
+            </>
+          )}
+          {!hasActiveFilter && (
+            <>
+              <span className="h-3 w-px bg-border" />
+              <span className="text-muted-foreground/70">Hover badges for details</span>
+            </>
+          )}
         </div>
       </div>
 
@@ -306,6 +372,7 @@ export function ComparisonTable() {
                   Qty/Yr
                 </th>
                 {vendors.map((vendor, vIdx) => {
+
                   const rank = vendorOverallRank.get(vIdx) || 0;
                   const avgRating =
                     vendor.lineItems.reduce((s, i) => s + i.historicalRating, 0) /
@@ -378,6 +445,7 @@ export function ComparisonTable() {
                   ranked.map((item, rank) => [item.idx, rank + 1])
                 );
 
+
                 return (
                   <tr
                     key={refItem.itemId}
@@ -408,12 +476,23 @@ export function ComparisonTable() {
                       {refItem.annualQty.toLocaleString("en-IN")}
                     </td>
                     {vendors.map((vendor, vIdx) => {
+    
                       const item = vendor.lineItems[rowIdx];
                       const rank = itemRankMap.get(vIdx) || 0;
                       const isL1 = rank === 1;
+                      const isL1OrL2 = rank <= 2;
                       const totalValue = item.annualQty * item.unitPrice;
                       const overallR = vendorOverallRank.get(vIdx) || 0;
                       const isCellHighlighted = highlightedVendorId === vendor.id || highlightedItemId === refItem.itemId;
+                      const isDimmed = filterL1L2 && !isL1OrL2;
+                      const isNonCompliant = filterNonCompliant && !item.technicalCompliance;
+                      const isCompliantDimmed = filterNonCompliant && item.technicalCompliance;
+                      const hasSavings = item.unitPrice < item.previousUnitPrice;
+                      const hasPriceRose = item.unitPrice > item.previousUnitPrice;
+                      const isSavingsHighlight = filterSavings && hasSavings;
+                      const isSavingsDimmed = filterSavings && !hasSavings;
+                      const isPriceRoseHighlight = filterPriceRose && hasPriceRose;
+                      const isPriceRoseDimmed = filterPriceRose && !hasPriceRose;
 
                       return (
                         <td
@@ -421,7 +500,14 @@ export function ComparisonTable() {
                           className={cn(
                             "px-3 py-2.5 border-border transition-all duration-500",
                             overallR === 1 && "bg-green-50/30",
-                            isCellHighlighted && "bg-[#0070BB]/10 ring-1 ring-inset ring-[#0070BB]/30"
+                            isCellHighlighted && "bg-[#0070BB]/10 ring-1 ring-inset ring-[#0070BB]/30",
+                            isDimmed && "opacity-20",
+                            isNonCompliant && "bg-red-50 ring-1 ring-inset ring-red-300",
+                            isCompliantDimmed && "opacity-20",
+                            isSavingsHighlight && "bg-green-50 ring-1 ring-inset ring-green-300",
+                            isSavingsDimmed && "opacity-20",
+                            isPriceRoseHighlight && "bg-red-50 ring-1 ring-inset ring-red-300",
+                            isPriceRoseDimmed && "opacity-20"
                           )}
                         >
                           <div className="space-y-1">
@@ -496,6 +582,7 @@ export function ComparisonTable() {
                 <td className="px-3 py-3 border-r border-border bg-muted/60" />
                 <td className="px-3 py-3 border-r border-border bg-muted/60" />
                 {vendors.map((vendor, vIdx) => {
+
                   const total = vendorTotals[vIdx];
                   const rank = vendorOverallRank.get(vIdx) || 0;
                   const isL1 = rank === 1;
