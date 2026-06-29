@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useAppStore } from "@/stores/app-store";
-import { Lightbulb, AlertTriangle, X, ShieldAlert, ShieldCheck } from "lucide-react";
+import { Lightbulb, AlertTriangle, X, ShieldAlert, ShieldCheck, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SourcingEvent } from "@/types";
 
@@ -160,6 +160,102 @@ function generateInsightText(insights: VendorInsight[], event: SourcingEvent): s
   return `${savingsPrefix}L1 ${l1.name} at ${formatLakhs(l1.total)} (${l1.complianceRate}% compliant, ${l1.riskLevel.toLowerCase()} risk). ${savingsPct}% spread vs L2 ${l2.name}. Review compliance and terms before awarding.`;
 }
 
+function generatePlainEnglish(insights: VendorInsight[], event: SourcingEvent): { title: string; points: { icon: "savings" | "warning" | "info" | "tip"; text: string }[] } {
+  const l1 = insights[0];
+  const l2 = insights[1];
+  const savings = computeSavingsVsLastBuy(event);
+  const savingsVsL2 = l2.total - l1.total;
+  const savingsPct = ((savingsVsL2 / l2.total) * 100).toFixed(1);
+  const compliantVendors = insights.filter(v => v.complianceRate === 100);
+  const points: { icon: "savings" | "warning" | "info" | "tip"; text: string }[] = [];
+
+  if (savings.totalSavings > 0) {
+    points.push({
+      icon: "savings",
+      text: `${l1.name} (the cheapest vendor overall) quotes ${formatInrAmount(savings.totalSavings)} less than what you paid last time — and that saving exists across ${savings.itemCount === savings.totalItems ? "all" : `${savings.itemCount} of`} ${savings.totalItems} items.`,
+    });
+  }
+
+  points.push({
+    icon: "info",
+    text: `${l1.name} is ranked L1 (lowest total cost) at ${formatLakhs(l1.total)}, which is ${savingsPct}% cheaper than the next vendor, ${l2.name} at ${formatLakhs(l2.total)}. The ${savingsPct}% spread means ${parseFloat(savingsPct) > 15 ? "there's a significant price gap — negotiate with L2 or consider split-sourcing" : "the pricing is competitive — small price differences, so prioritize compliance and delivery terms"}.`,
+  });
+
+  if (compliantVendors.length > 0 && l1.complianceRate < 100) {
+    const names = compliantVendors.map(v => `${v.name} (L${v.rank}, ${formatLakhs(v.total)})`).join(", ");
+    points.push({
+      icon: "tip",
+      text: `Fully compliant alternatives: ${names}. These vendors pass all technical requirements but cost more.`,
+    });
+  }
+
+  if (l1.riskLevel === "High" || l1.complianceRate < 60) {
+    points.push({
+      icon: "warning",
+      text: `However, ${l1.name} is flagged as ${l1.riskLevel.toLowerCase()} risk — only ${l1.complianceRate}% of their items meet technical compliance (${l1.nonCompliantCount} of ${event.vendors[0].lineItems.length} items fail). Awarding to them without review could expose you to quality or delivery issues.`,
+    });
+  } else if (l1.complianceRate === 100 && l1.riskLevel === "Low") {
+    points.push({
+      icon: "savings",
+      text: `${l1.name} is fully compliant across all items and rated low risk — a strong candidate for full award.`,
+    });
+  } else {
+    points.push({
+      icon: "info",
+      text: `${l1.name} has ${l1.complianceRate}% compliance and is rated ${l1.riskLevel.toLowerCase()} risk. Review the ${l1.nonCompliantCount} non-compliant items before awarding.`,
+    });
+  }
+
+  return {
+    title: `${event.name} — At a Glance`,
+    points,
+  };
+}
+
+function InsightExplainer({ insights, event, onClose }: { insights: VendorInsight[]; event: SourcingEvent; onClose: () => void }) {
+  const { title, points } = generatePlainEnglish(insights, event);
+  const iconMap = {
+    savings: { icon: "↓", bg: "bg-green-50", border: "border-green-200", text: "text-green-700" },
+    warning: { icon: "!", bg: "bg-red-50", border: "border-red-200", text: "text-red-700" },
+    info: { icon: "i", bg: "bg-blue-50", border: "border-blue-200", text: "text-blue-700" },
+    tip: { icon: "✓", bg: "bg-amber-50", border: "border-amber-200", text: "text-amber-700" },
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/20 backdrop-blur-[2px]" onClick={onClose} />
+      <div className="relative bg-card border border-border rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-border bg-gradient-to-r from-[#0070BB]/5 to-transparent">
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-md bg-[#0070BB]/10 flex items-center justify-center">
+              <Lightbulb className="w-3.5 h-3.5 text-[#0070BB]" />
+            </div>
+            <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+          </div>
+          <button onClick={onClose} className="text-muted-foreground hover:text-foreground transition-colors">
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-5 space-y-3">
+          {points.map((point, i) => {
+            const style = iconMap[point.icon];
+            return (
+              <div key={i} className={cn("flex items-start gap-3 px-4 py-3 rounded-lg border", style.bg, style.border)}>
+                <span className={cn("w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0 mt-0.5", style.bg, style.text, "border", style.border)}>
+                  {style.icon}
+                </span>
+                <p className="text-[13px] text-foreground leading-relaxed">{point.text}</p>
+              </div>
+            );
+          })}
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 function VendorDetailPopup({ vendor, onClose }: { vendor: VendorInsight; onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -278,6 +374,7 @@ export function InsightBanner() {
   const insights = computeInsights(selectedEvent);
   const insightText = generateInsightText(insights, selectedEvent);
   const [popupVendor, setPopupVendor] = useState<VendorInsight | null>(null);
+  const [showExplainer, setShowExplainer] = useState(false);
 
   return (
     <>
@@ -294,6 +391,14 @@ export function InsightBanner() {
             </div>
             <p className="text-[13px] text-foreground leading-relaxed">
               {insightText}
+              {" "}
+              <button
+                onClick={() => setShowExplainer(true)}
+                className="inline-flex items-center gap-1 text-[11px] text-[#0070BB]/70 hover:text-[#0070BB] transition-colors cursor-pointer align-middle translate-y-[0.5px]"
+              >
+                <HelpCircle className="w-3 h-3" />
+                What does this mean?
+              </button>
             </p>
           </div>
         </div>
@@ -344,6 +449,14 @@ export function InsightBanner() {
         <VendorDetailPopup
           vendor={popupVendor}
           onClose={() => setPopupVendor(null)}
+        />
+      )}
+
+      {showExplainer && (
+        <InsightExplainer
+          insights={insights}
+          event={selectedEvent}
+          onClose={() => setShowExplainer(false)}
         />
       )}
     </>
