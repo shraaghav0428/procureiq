@@ -226,7 +226,11 @@ export function ComparisonTable() {
     filterNonCompliant, filterSavings, filterPriceRose, filterL1L2,
     setFilterNonCompliant, setFilterSavings, setFilterPriceRose, setFilterL1L2, resetFilters,
   } = useAppStore();
-  const vendors = selectedEvent.vendors;
+  const vendors = [...selectedEvent.vendors].sort((a, b) => {
+    const totalA = a.lineItems.reduce((sum, item) => sum + item.annualQty * item.unitPrice, 0);
+    const totalB = b.lineItems.reduce((sum, item) => sum + item.annualQty * item.unitPrice, 0);
+    return totalA - totalB;
+  });
   const lineItemCount = vendors[0].lineItems.length;
   const [quoteVendor, setQuoteVendor] = useState<Vendor | null>(null);
 
